@@ -111,7 +111,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'POST' && req.headers.origin !== origin.origin) throw fail('Request origin not allowed.', 403);
       if (req.method === 'GET' && url.pathname === '/api/status') {
         let wallet = null; try { wallet = session(req); } catch {}
-        return json(res, 200, { online: true, wallet, rules: RULES_VERSION, privy: process.env.PRIVY_APP_ID || null, scores: SCORES || null });
+        return json(res, 200, { online: true, wallet, rules: RULES_VERSION, privy: process.env.PRIVY_APP_ID || 'cmw0uhw8m03h00gl7m03nwytr', scores: SCORES || null });
       }
       if (req.method === 'POST' && url.pathname === '/api/auth/challenge') {
         limit(req, 'auth', 12); const { wallet } = await body(req); if (!address(wallet)) throw fail('Invalid wallet.');
