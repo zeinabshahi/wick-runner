@@ -1533,10 +1533,15 @@ function renderOnline() {
   $('rankedLogout').classList.toggle('hidden', !rankedSession);
 }
 async function loadOnlineBoard() {
-  if (!onlineAvailable || VERIFY_MODE) return;
-  const id = ++onlineBoardRequest, board = boardId(level); $('onlineBoard').textContent = 'Loading verified runs…';
+  if (VERIFY_MODE) return;
+  const id = ++onlineBoardRequest, board = boardId(level); $('onlineBoard').textContent = 'Loading on-chain records…';
   try {
-    const { entries } = await api('boards?onchain=1&board=' + encodeURIComponent(board)); if (id !== onlineBoardRequest) return;
+    // The board is read straight from WickRunnerScores.top(), so it survives any server restart; names come from the server when it has them.
+    const { Interface, id: hashText } = await loadEthers(), abi = new Interface(['function top(bytes32) view returns (tuple(address player,uint64 score,uint64 seq)[])']);
+    const [rows] = abi.decodeFunctionResult('top', await ethCall(SCORES.address, abi.encodeFunctionData('top', [hashText(board)])));
+    const names = {}; try { for (const e of (await api('boards?onchain=1&board=' + encodeURIComponent(board))).entries) names[e.wallet] = e.name; } catch {}
+    const entries = rows.map(r => { const w = r.player.toLowerCase(), short = w.slice(0, 6) + '…' + w.slice(-4); return { wallet: short, name: names[short] || 'Runner', score: Number(r.score) }; });
+    if (id !== onlineBoardRequest) return;
     $('onlineBoard').replaceChildren();
     if (!entries.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No on-chain records yet. Record a verified run to set the first line.'; $('onlineBoard').append(li); }
     for (const [i, e] of entries.entries()) { const li = document.createElement('li'); for (const value of [i + 1, e.name, e.wallet, e.score.toLocaleString()]) { const span = document.createElement('span'); span.textContent = value; li.append(span); } $('onlineBoard').append(li); }
