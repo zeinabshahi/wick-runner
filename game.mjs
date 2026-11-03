@@ -852,6 +852,9 @@ const VIBERS = [
   { name: 'Flux', bio: 'FLUX / the night-shift skater. Every rail is a shortcut.', accent: 0x81e9db, head: 0x2a4f3f, body: 0x24473a, arm: 0x2a4f3f, cuff: 0xd5e2e8, feet: 0x282c31, sole: 0x81e9db, top: 'cap', cap: 0x356243, face: 'goggles', frame: 0x7de8d8, eye: 0xe9e4d4, tie: 0x15161a, bg: '#d9e4ee' },
   { name: 'Relay', bio: 'RELAY / the signal runner. Quiet focus. Clean connections.', accent: 0xffc65e, head: 0xd5e2e8, body: 0x192c45, panel: 0xd5e2e8, arm: 0x253e59, cuff: 0xd5e2e8, cuffH: .14, feet: 0x162438, sole: 0xffc65e, top: 'comms', face: 'signal', eye: 0x9eeaff, bg: '#d9e4ee' },
   { name: 'Ember', bio: 'EMBER / the rooftop artist. Leave a bright line behind.', accent: 0xff859c, head: 0xa8513e, body: 0x202a36, arm: 0xa8513e, cuff: 0xd5e2e8, cuffBand: 0x15161a, feet: 0x162438, sole: 0xff859c, top: 'mohawk', hair: 0x573a3b, face: 'big', eye: 0xdedacd, item: 'canister', bg: '#d9e4ee' },
+  // Haunt the Chain crew
+  { name: 'Bones', bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xe9e3cf, body: 0x1d1f27, rib: 0xe9e3cf, arm: 0xe9e3cf, cuff: 0x1d1f27, feet: 0x1d1f27, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
+  { name: 'Jack', bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xef7a1f, body: 0x3a1f4f, arm: 0x3a1f4f, cuff: 0xef7a1f, feet: 0x24152f, sole: 0xffa62e, top: 'stem', stem: 0x4f7a2a, leaf: 0x7fb23a, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
 ];
 const INK = 0x15161a, OUTLINE = new THREE.LineBasicMaterial({ color: INK });
 // Toon shading (3 crisp light bands) + an inverted-hull ink outline: the thick, even black silhouette of the art.
@@ -917,6 +920,27 @@ function buildRunner(v, addToScene = true) {
     blk(hips, .24, .13, .04, v.accent, 0, BH - .14, BD / 2 + .02);                    // shirt print
   }
 
+  if (v.face === 'skull') { // Bones: deep black sockets with toxic-green pupils, a small nose gap, a row of teeth, white ribs on a black tee
+    for (const sd of [-1, 1]) { blk(head, .32, .3, .08, INK, sd * .23, .5, FZ + .03); pupil(.1, .1, .03, v.eye, sd * .23, .5, FZ + .08); }
+    blk(head, .1, .12, .06, INK, 0, .29, FZ + .02, false);
+    blk(head, .6, .14, .06, INK, 0, .12, FZ + .02, false);
+    for (let n = -2; n <= 2; n++) blk(head, .085, .1, .03, v.head, n * .11, .125, FZ + .06, false);  // teeth over the dark mouth
+    blk(head, .03, .2, .02, tint(v.head, .75), .3, .78, FZ + .01, false);                             // hairline crack
+    for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) blk(hips, .2, .045, .04, v.rib, sd * .14, BH - .1 - n * .09, BD / 2 + .02, false);
+    blk(hips, .05, .3, .04, v.rib, 0, BH - .19, BD / 2 + .02, false);                                 // sternum
+  }
+  if (v.face === 'jack') { // Jack: a carved, candle-lit pumpkin: ribbed shell, triangle eyes, a jagged grin
+    for (const x of [-.36, -.12, .12, .36]) blk(head, .05, HH - .1, .03, tint(v.head, .78), x, HH / 2, FZ + .005, false); // pumpkin ribs
+    for (const sd of [-1, 1]) {                                                                      // triangle eyes from stacked bars
+      blk(head, .3, .07, .05, v.eye, sd * .24, .44, FZ + .03, false); blk(head, .19, .07, .05, v.eye, sd * .24, .51, FZ + .03, false); eye(.08, .07, .05, v.eye, sd * .24, .58, FZ + .03);
+    }
+    for (const sd of [-1, 1]) blk(head, .36, .26, .03, 0x5a2408, sd * .24, .51, FZ + .012, false);    // scorched carving edge behind the glow
+    blk(head, .74, .2, .03, 0x5a2408, 0, .17, FZ + .012, false);
+    blk(head, .1, .07, .05, v.eye, 0, .34, FZ + .03, false);                                            // nose
+    blk(head, .66, .12, .05, v.eye, 0, .17, FZ + .03, false);                                           // grin
+    for (const x of [-.22, 0, .22]) blk(head, .07, .06, .055, v.head, x, .2, FZ + .04, false);          // teeth
+    for (const x of [-.11, .11]) blk(head, .07, .05, .055, v.head, x, .13, FZ + .04, false);
+  }
   // Reflective courier harness and compact pack give the crew a shared district identity.
   blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4);
   for (const side of [-1, 1]) { blk(hips, .075, .3, .035, v.accent, side * .22, BH / 2, BD / 2 + .04); blk(head, .16, .07, .035, v.accent, side * .32, .1, FZ + .06); }
@@ -934,6 +958,7 @@ function buildRunner(v, addToScene = true) {
     blk(top, .13, .055, .13, v.accent, -.46, .285, -.27);
     blk(top, .32, .035, .2, v.accent, .12, .055, -.18, false);
   }
+  if (v.top === 'stem') { blk(top, .14, .22, .14, v.stem, 0, .1, 0); const lf = blk(top, .24, .04, .14, v.leaf, .16, .14, .04); lf.rotation.z = -.4; }
   if (v.top === 'mohawk') [[.2, .24], [.06, .38], [-.08, .46], [-.22, .32]].forEach(([z, h]) => blk(top, .11, h, .11, v.hair, 0, h / 2, z)); // chunky strips, tallest toward the back
 
   // ARMS hang from the body's sides; FEET are chunky blocks under it
@@ -1509,7 +1534,7 @@ if (!Array.isArray(profile.cosmetics)) profile.cosmetics = ['default'];
   profile.cleared = profile.cleared.map(x => OLD[x] || x); }
 let playerName = store.get('cp-name', 'viber' + Math.floor(100 + Math.random() * 900));
 store.set('cp-name', playerName); // keep the generated name stable across visits
-const VIBER_XP = [0, 300, 900, 2000]; // XP needed to unlock each viber
+const VIBER_XP = [0, 300, 900, 2000, 0, 0]; // the Haunt crew is free for the event // XP needed to unlock each viber
 const levelUnlocked = value => { const lv = typeof value === 'number' ? LEVELS[value] : value; if (!lv) return false; if (lv.tutorial || lv.sprint || lv.haunt || lv.sym === 'CP01') return true; const i = LEVELS.findIndex(l => l.sym === lv.sym); return profile.cleared.includes(lv.endless || lv.cup ? 'CP01' : LEVELS[i - 1]?.sym); };
 const nextLevel = lv => lv.arena || lv.endless || lv.cup ? null : lv.tutorial ? makeSprintLevel(sprintPick) : lv.sprint ? LEVELS[1] : LEVELS[LEVELS.findIndex(l => l.sym === lv.sym) + 1];
 const boardId = lv => `v${RULES_VERSION}:` + (lv.arena ? `ARENA-${lv.arenaId}` : (lv.endless ? `DAILY-${lv.seed}` : lv.cup ? `CUP-${lv.period}` : lv.sprint && lv.route ? `SPRINT-R${lv.route + 1}` : lv.sym) + (tfOf(lv).id === '1H' ? '' : '@' + tfOf(lv).id)); // each timeframe has its own board

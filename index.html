@@ -166,7 +166,7 @@
   .tfrow button:disabled { opacity:.35; cursor:default; }
   .lvl.on { border-color:var(--lime); background:rgba(220,245,19,.06); box-shadow:inset 0 0 0 1px var(--lime); }
   .lvl.lock { opacity:.42; cursor:not-allowed; }
-  #pick { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  #pick { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
   .viber { position:relative; padding:0 0 8px; border:2px solid transparent; border-radius:12px; cursor:pointer; color:#111; font:700 12px var(--sans); pointer-events:auto; overflow:hidden; transition:transform .15s; }
   .viber:hover:not(.lock) { transform:translateY(-2px); }
   .viber img { width:100%; display:block; }
@@ -194,7 +194,7 @@
   .help summary { cursor:pointer; pointer-events:auto; list-style:none; } .help summary::before { content:'＋ '; color:var(--lime); }
   .controls { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 26px; margin-top:12px; text-align:left; }
   .controls div { display:flex; gap:10px; align-items:baseline; } .controls b { flex:0 0 108px; color:var(--text); font:600 11px var(--mono); }
-  @media (max-width:600px) { .controls { grid-template-columns:1fr; } #pick { grid-template-columns:repeat(4, 1fr); gap:6px; } .viber { font-size:10px; } }
+  @media (max-width:600px) { .controls { grid-template-columns:1fr; } #pick { grid-template-columns:repeat(3, 1fr); gap:6px; } .viber { font-size:10px; } }
 
   /* results */
   /* Keep replay actions visible while longer run reports scroll. */
