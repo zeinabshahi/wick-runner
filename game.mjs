@@ -255,8 +255,8 @@ const Sfx = {
     this.grindGain = this.ctx.createGain(); this.grindGain.gain.value = 0;
     src.connect(bp).connect(this.grindGain).connect(this.sfxBus); src.start();
   },
-  vol: [.6, .8],
-  setVolumes(music, sfx) { this.vol = [music, sfx]; if (this.ctx) { this.musicBus.gain.value = this.paused ? 0 : music; this.sfxBus.gain.value = sfx; } },
+  vol: [.6, .8], MUSIC_BOOST: 1.8, // the music files sit at -16 LUFS; without this boost the bed hid under the effects
+  setVolumes(music, sfx) { this.vol = [music, sfx]; if (this.ctx) { this.musicBus.gain.value = this.paused ? 0 : music * this.MUSIC_BOOST; this.sfxBus.gain.value = sfx; } },
   tone(f, d, type = 'square', v = .1, f2 = f, delay = 0, out = this.sfxBus) {
     if (!this.ctx) return; const t = this.ctx.currentTime + delay;
     const o = this.ctx.createOscillator(), g = this.ctx.createGain(); o.type = type;
@@ -304,7 +304,7 @@ const Sfx = {
   get fileMusic() { return !!this.musicEl?.src; },
   syncMusic() { // fades, never hard cuts: down in 0.35 s (then the element pauses), back up in 0.6 s
     if (!this.ctx) return; const on = !this.muted && !this.paused && this.musicOn, g = this.musicBus.gain, now = this.ctx.currentTime;
-    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(on ? this.vol[0] : 0, now + (on ? .6 : .35));
+    g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(on ? this.vol[0] * this.MUSIC_BOOST : 0, now + (on ? .6 : .35));
     clearTimeout(this.pauseT); if (!this.musicEl?.src) return;
     if (on) this.musicEl.play().catch(() => {}); else this.pauseT = setTimeout(() => this.musicEl.pause(), 400);
   },
@@ -689,10 +689,12 @@ function resetCourse() {
   haunt.group.visible = !!level.haunt; skyline.visible = !level.haunt; hemi.intensity = 1.4; Sfx.setScene(level.haunt ? 'haunt' : 'main');
   syncHauntCrew();
 }
-// The Haunt crew (Bones, Jack) only runs the Halloween course; leaving it puts back the last regular pick.
+// The Haunt crew (Bones, Jack) only runs the Halloween course, and the Halloween course only the Haunt crew; each side remembers its last pick.
 function syncHauntCrew() {
-  document.querySelectorAll('.viber[data-haunt]').forEach(b => b.hidden = !level.haunt);
-  if (VIBERS[viberIdx].haunt && !level.haunt) { let m = 0; try { m = clamp(Math.trunc(+localStorage.getItem('cp-viber-main') || 0), 0, 3); } catch (e) {} setViber(m); }
+  document.querySelectorAll('.viber').forEach(b => b.hidden = !!b.dataset.haunt !== !!level.haunt); // Halloween: only the Haunt crew
+  if (!!VIBERS[viberIdx].haunt === !!level.haunt) return;
+  const key = level.haunt ? 'cp-viber-haunt' : 'cp-viber-main', ok = VIBERS.map((v, i) => i).filter(i => !!VIBERS[i].haunt === !!level.haunt);
+  let m = ok[0]; try { const s = Math.trunc(+localStorage.getItem(key)); if (ok.includes(s)) m = s; } catch (e) {} setViber(m);
 }
 const keepIf = (a, f) => { let j = 0; for (const x of a) if (f(x)) a[j++] = x; a.length = j; }; // in-place filter
 // Keep ~60 candles built ahead of the runner; in endless, drop everything ~30 candles behind.
@@ -1027,7 +1029,7 @@ buildPicker();
 
 function setViber(i) {
   viberIdx = i; disposeObj(runner.root); runner = buildRunner(VIBERS[i]);
-  try { localStorage.setItem('cp-viber', i); if (!VIBERS[i].haunt) localStorage.setItem('cp-viber-main', i); } catch (e) {}
+  try { localStorage.setItem('cp-viber', i); localStorage.setItem(VIBERS[i].haunt ? 'cp-viber-haunt' : 'cp-viber-main', i); } catch (e) {}
   document.querySelectorAll('.viber').forEach((b, j) => b.classList.toggle('on', j === i));
   if ($('runnerNote')) $('runnerNote').textContent = VIBERS[i].bio;
 }
@@ -1042,7 +1044,7 @@ function buildPicker() {
     const b = document.createElement('button'); b.className = 'viber' + (i === viberIdx ? ' on' : ''); b.style.background = v.bg;
     b.innerHTML = `<img src="${r.domElement.toDataURL()}" alt=""><span>${v.name}</span>`;
     if (v.haunt) b.dataset.haunt = '1';
-    b.addEventListener('click', e => { e.stopPropagation(); if (profile.xp >= VIBER_XP[i] && (!v.haunt || level.haunt)) setViber(i); });
+    b.addEventListener('click', e => { e.stopPropagation(); if (profile.xp >= VIBER_XP[i] && !!v.haunt === !!level.haunt) setViber(i); });
     pick.append(b); disposeObj(model);
   });
   r.dispose();
@@ -1093,7 +1095,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Enter' && game.state === 'menu') $('go').click();
   if (e.code === 'KeyR' && game.state !== 'menu') { $('pause').classList.add('hidden'); beginRun(); }
   if (e.code === 'Escape') { if (!$('settings').classList.contains('hidden')) closeSettings(); else if (game.state === 'pause') resume(); else if (game.state === 'play' || game.state === 'count') pause(); else if (game.state === 'end') showMenu(); }
-  if (e.code === 'KeyM') { Sfx.muted = !Sfx.muted; Sfx.syncMusic(); try { localStorage.setItem('cp-mute', Sfx.muted ? '1' : '0'); } catch (e) {} popup(Sfx.muted ? 'MUSIC OFF' : 'MUSIC ON', '#d1d4dc'); }
+  if (e.code === 'KeyM') { Sfx.muted = !Sfx.muted; Sfx.syncMusic(); popup(Sfx.muted ? 'MUSIC OFF' : 'MUSIC ON', '#d1d4dc'); }
   if (e.code === 'KeyG') toggleGhost();
   if (e.code === 'KeyV') toggleAutoRun();
   if (e.code === 'KeyF') { yaw = 0; pitch = .1; }
@@ -2055,7 +2057,7 @@ function countUp(el, n) { // score ticks up with an ease-out; a timer guarantees
 const fmtTime = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(2).padStart(5, '0')}`;
 
 $('go').addEventListener('click', beginRun);
-try { Sfx.muted = localStorage.getItem('cp-mute') === '1'; } catch (e) {}
+try { localStorage.removeItem('cp-mute'); } catch (e) {} // M mutes for this visit only; a remembered mute silently hid the music on later visits
 $('again').addEventListener('click', beginRun);
 $('menu').addEventListener('click', showMenu);
 $('nextRoute').addEventListener('click', () => { sprintPick = ((level.route || 0) + 1) % SPRINT_ROUTES.length; level = makeSprintLevel(sprintPick); store.set('cp-sprint-route', sprintPick); store.set('cp-level', 'SPRINT'); renderMenu(); beginRun(); });
