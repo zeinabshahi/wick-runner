@@ -1584,7 +1584,7 @@ $('submitRanked').onclick = async () => {
 const SCORES = { address: '0x2417104586F701fD9AbBc7e068A461ad5766Fe89' }; // WickRunnerScores on Robinhood Chain testnet
 // EMAIL LOGIN — Privy (vendor/privy.js, built from wallet/privy.js) signs players in by email and gives each an
 // embedded wallet on Robinhood Chain testnet. That wallet signs the ranked/arena messages and sends on-chain records.
-let privyAppId = null, privyWatching = false;
+let privyAppId = 'cmw0uhw8m03h00gl7m03nwytr', privyWatching = false; // public client id; works without the score server
 async function emailLogin() {
   if (!privyAppId) throw new Error('Email sign-in is not configured yet. Practice is always free.');
   if (!window.WickWallet) await new Promise((res, rej) => { // ~6 MB, so it loads only when someone signs in
@@ -3195,4 +3195,4 @@ window.__cp = { buildRunner, VIBERS, setViber, THREE, get runner() { return runn
   advance(sec) { for (let s = 0; s < sec; s += 1 / 60) tick(1 / 60, performance.now()); }, // test hook: run frames without rAF
   get finishZ() { return finishZ; }, get lastRun() { return game.lastRun; }, get runLog() { return runLog; }, result: runResult, retryCheckpoint, resolveDeath, replayRun, tick, get camera() { return camera; }, render: () => composer.render(), Sfx, setArena(c) { level = arenaLevel(sanitizeArena(c)); }, // camera/render/Sfx: frame-by-frame video capture (video/capture.mjs)
   verifyArena, arenaMessage, sanitizeArena, tokenCreators };
-if (!VERIFY_MODE) api('status').then(s => { privyAppId = s.privy; if (s.scores) SCORES.address ||= s.scores; onlineAvailable = s.online && s.rules === RULES_VERSION; rankedSession = s.wallet; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());
+if (!VERIFY_MODE) api('status').then(s => { if (s.scores) SCORES.address ||= s.scores; onlineAvailable = s.online && s.rules === RULES_VERSION; rankedSession = s.wallet; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());
