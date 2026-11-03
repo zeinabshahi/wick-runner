@@ -110,5 +110,5 @@ New community arenas offer 600/900/1,200 candles. Older short arena links retain
 vibe/vibe does not allow regular browser wallets (MetaMask etc.). Players sign in with email through [Privy](https://privy.io), which creates an embedded wallet on Robinhood Chain testnet; that wallet signs ranked/arena messages and sends on-chain records. No browser extension wallet is ever requested.
 
 1. Create an app at dashboard.privy.io, enable **Email** login only, and add your site domain (and `http://localhost:8123`) to allowed origins.
-2. Run the server with `PRIVY_APP_ID=<app id>` (plus `VERIFIER_KEY` and `SCORES_ADDRESS` for on-chain records, see `contracts/`).
+2. The App ID is set in `game.mjs`. Everything runs on Vercel: the site is static and ranked play uses the Vercel Functions in `api/` (replay check in headless Chromium, then a signed attestation). Set one env var in Vercel: `VERIFIER_KEY` (Sensitive). Locally, `npm start` runs the same handler.
 3. After changing `wallet/privy.js`, rebuild the bundle with `npm run build:wallet` (output `vendor/privy.js` is committed).

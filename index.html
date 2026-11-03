@@ -382,6 +382,10 @@
   .tkaddr { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:13px; } .tkaddr code { font:500 12px var(--mono); word-break:break-all; color:var(--text); }
   .tkaddr a { color:var(--lime); font:600 12px var(--mono); }
   #tkBuy { align-self:flex-start; text-decoration:none; }
+  .walletcard { margin-top:10px; padding:14px 16px; display:grid; gap:10px; } .walletcard[hidden] { display:none; }
+  .wc-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .wc-row code { font:500 13px var(--mono); overflow-wrap:anywhere; }
+  .wc-bal { display:flex; gap:28px; } .wc-bal b { display:block; font:700 20px var(--sans); }
+  .wc-act { display:flex; gap:14px; align-items:center; flex-wrap:wrap; } .wc-act a.big { text-decoration:none; } .wc-note { margin:0; text-transform:none; letter-spacing:0; }
   .tksteps { margin:0; padding-left:18px; color:var(--muted); font-size:14px; line-height:1.6; } .tksteps b { color:var(--text); }
   .tkwarn, .tknote { margin:0; font-size:12.5px; line-height:1.55; color:var(--muted); } .tkwarn { border-left:2px solid var(--red); padding-left:10px; }
   .tklines { list-style:none; margin:10px 0 12px; padding:0; display:flex; flex-direction:column; gap:8px; font-size:13px; }
@@ -886,6 +890,12 @@
       </div>
       <div class="walletrow"><button class="big alt small" id="walletBtn">Sign in with email</button><span class="lbl" id="walletInfo">Email sign-in · secure wallet by Privy</span><span style="flex:1"></span><button class="linkbtn" id="termsBtn">Terms, incentives &amp; safety</button>
     </div>
+      <div class="walletcard panel" id="walletCard" hidden>
+        <div class="wc-row"><span class="lbl">Your wallet · Robinhood Chain testnet</span><code id="wcAddr"></code><button class="linkbtn" id="wcCopy">Copy</button></div>
+        <div class="wc-bal"><div><span class="lbl">$WRUN</span><b id="wcWrun">…</b></div><div><span class="lbl">Testnet ETH</span><b id="wcEth">…</b></div></div>
+        <div class="wc-act"><a class="big small" id="wcBuy" target="_blank" rel="noopener noreferrer">Buy $WRUN ↗</a><a class="linkbtn" id="wcExplorer" target="_blank" rel="noopener noreferrer">View on explorer ↗</a><button class="linkbtn" id="wcOut">Sign out</button></div>
+        <p class="lbl wc-note">Created for you by Privy when you signed in with email. Buying opens our official vibe/vibe page; testnet ETH pays the fees. Testnet tokens have no value.</p>
+      </div>
     <div class="hero">
       <div>
         <h1>Chart <span>Parkour</span> 3D</h1>

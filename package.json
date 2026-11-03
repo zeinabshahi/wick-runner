@@ -14,8 +14,10 @@
     "build:wallet": "esbuild wallet/privy.js --bundle --minify --format=iife --target=es2020 --define:process.env.NODE_ENV='\"production\"' --define:global=globalThis --outfile=vendor/privy.js --log-level=warning"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^147.0.2",
     "ethers": "6.13.4",
     "playwright": "1.58.2",
+    "playwright-core": "^1.58.2",
     "three": "0.170.0"
   },
   "devDependencies": {

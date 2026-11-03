@@ -8,8 +8,4 @@ artifacts
 tests
 .env*
 server.mjs
-package.json
-package-lock.json
-Dockerfile
-.dockerignore
 video/

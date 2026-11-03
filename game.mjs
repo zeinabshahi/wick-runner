@@ -1526,7 +1526,7 @@ async function api(path, data) {
 function courseConfig() { return { sym: level.arena ? 'ARENA' : level.sym, tf: TFS.indexOf(tfOf(level)), seed: level.seed, period: level.period || '', arena: level.arena || null, ...(level.sprint ? { route: level.route || 0 } : {}) }; }
 function renderOnline() {
   $('onlineTitle').textContent = rankedSession ? 'Your next run can count.' : 'Practice makes a cleaner line.';
-  $('onlineStatus').textContent = onlineAvailable ? rankedSession ? `Signed in ${rankedSession.slice(0, 6)}…${rankedSession.slice(-4)} · one best score per wallet · Cup: 3 ranked starts per week` : 'Sign one free login message to join the shared board. Practice needs no wallet.' : 'Practice mode · shared boards are available when the score service is running.';
+  $('onlineStatus').textContent = onlineAvailable ? rankedSession ? `Signed in ${rankedSession.slice(0, 6)}…${rankedSession.slice(-4)} · every ranked run is replayed, then you can record it on-chain` : 'Sign in with email to play ranked and record your runs on-chain. Practice needs nothing.' : 'Practice mode · ranked play opens when the verifier is configured.';
   $('rankedLogin').hidden = !!rankedSession; $('rankedLogin').disabled = !onlineAvailable;
   $('rankedMode').disabled = !onlineAvailable || !rankedSession;
   if (!rankedSession) $('rankedMode').checked = false;
@@ -1539,8 +1539,7 @@ async function loadOnlineBoard() {
     // The board is read straight from WickRunnerScores.top(), so it survives any server restart; names come from the server when it has them.
     const { Interface, id: hashText } = await loadEthers(), abi = new Interface(['function top(bytes32) view returns (tuple(address player,uint64 score,uint64 seq)[])']);
     const [rows] = abi.decodeFunctionResult('top', await ethCall(SCORES.address, abi.encodeFunctionData('top', [hashText(board)])));
-    const names = {}; try { for (const e of (await api('boards?onchain=1&board=' + encodeURIComponent(board))).entries) names[e.wallet] = e.name; } catch {}
-    const entries = rows.map(r => { const w = r.player.toLowerCase(), short = w.slice(0, 6) + '…' + w.slice(-4); return { wallet: short, name: names[short] || 'Runner', score: Number(r.score) }; });
+        const entries = rows.map(r => { const w = r.player.toLowerCase(), short = w.slice(0, 6) + '…' + w.slice(-4); return { wallet: short, name: w === rankedSession ? 'You' : 'Runner', score: Number(r.score) }; });
     if (id !== onlineBoardRequest) return;
     $('onlineBoard').replaceChildren();
     if (!entries.length) { const li = document.createElement('li'); li.className = 'empty'; li.textContent = 'No on-chain records yet. Record a verified run to set the first line.'; $('onlineBoard').append(li); }
@@ -1555,7 +1554,7 @@ async function beginRun() {
       if (!rankedSession) throw new Error('Sign in before starting a ranked run.');
       if (game.state === 'play' || game.state === 'count') pause();
       const chosenBoard = boardId(level);
-      rankedTicket = await api('runs/start', { board: chosenBoard, course: courseConfig() });
+      rankedTicket = await api('runs/start', { wallet: rankedSession, board: chosenBoard, course: courseConfig() });
       if (chosenBoard !== boardId(level)) throw new Error('The chart changed while starting. Please start again.');
     }
     Sfx.init(); Sfx.startMusic(); restart(); $('pause').classList.add('hidden');
@@ -1565,18 +1564,15 @@ async function beginRun() {
 $('rankedLogin').onclick = async () => {
   const b = $('rankedLogin'); b.disabled = true;
   try {
-    const account = await emailLogin(), eth = await WickWallet.provider();
-    const { message } = await api('auth/challenge', { wallet: account });
-    const signature = await eth.request({ method: 'personal_sign', params: [utf8hex(message), account] });
-    const result = await api('auth/verify', { signature }); rankedSession = result.wallet; renderOnline();
+    rankedSession = await emailLogin(); renderOnline(); // the email wallet is the ranked identity; only it can record its runs on-chain
   } catch (e) { $('onlineStatus').textContent = e.code === 4001 ? 'Sign-in cancelled. You can keep practicing.' : e.message; }
   finally { b.disabled = !onlineAvailable; }
 };
-$('rankedLogout').onclick = async () => { try { await api('auth/logout', {}); rankedSession = null; renderOnline(); } catch { $('onlineStatus').textContent = 'Could not sign out. Please retry.'; } };
+$('rankedLogout').onclick = async () => { try { await WickWallet.logout(); rankedSession = null; renderOnline(); } catch { $('onlineStatus').textContent = 'Could not sign out. Please retry.'; } };
 $('submitRanked').onclick = async () => {
   const b = $('submitRanked'); b.disabled = true; b.textContent = 'Verifying replay…';
   const run = game.lastRun;
-  try { run.ticketId = run.ticket; const r = await api('runs/submit', { id: run.ticket, log: run.log, claimed: run.total, name: playerName }); run.ticket = null; if (game.lastRun === run) b.textContent = '✓ Server verified'; if (r.attest && game.lastRun === run) offerOnchain(r.attest, run.ticketId); }
+  try { const r = await api('runs/submit', { id: run.ticket, log: run.log, claimed: run.total, name: playerName }); run.ticket = null; if (game.lastRun === run) b.textContent = '✓ Server verified'; if (r.attest && game.lastRun === run) offerOnchain(r.attest); }
   catch (e) { if (game.lastRun === run) { b.textContent = 'Retry submission'; popup(e.message, '#ff7878'); b.disabled = false; } }
 };
 /* ON-CHAIN RECORD — a server-verified run can be written to WickRunnerScores on Robinhood Chain testnet.
@@ -1593,7 +1589,7 @@ async function emailLogin() {
   if (!privyWatching) { privyWatching = true; WickWallet.onChange(onPrivyChange); }
   await WickWallet.init(privyAppId); return WickWallet.login();
 }
-function offerOnchain(a, scoreId) {
+function offerOnchain(a) {
   if (!SCORES.address || !window.WickWallet?.address()) return;
   const b = $('recordOnchain'); b.classList.remove('hidden'); b.disabled = false; b.textContent = 'Record on-chain (testnet)';
   b.onclick = async () => {
@@ -1603,7 +1599,7 @@ function offerOnchain(a, scoreId) {
       const data = new Interface(['function record(bytes32,uint64,bytes32,uint64,bytes)']).encodeFunctionData('record', [a.board, a.score, a.runId, a.deadline, a.sig]);
       const eth = await WickWallet.provider(), from = WickWallet.address();
       const tx = await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: SCORES.address, data }] });
-      b.textContent = 'Waiting for the block…'; await reportOnchain(scoreId, tx); b.textContent = '✓ Recorded on-chain'; b.onclick = () => window.open(`${CHAIN.explorer}/tx/${tx}`, '_blank', 'noopener'); b.disabled = false;
+      b.textContent = '✓ Recorded on-chain'; b.onclick = () => window.open(`${CHAIN.explorer}/tx/${tx}`, '_blank', 'noopener'); b.disabled = false;
     } catch (e) { b.textContent = e.code === 4001 ? 'Record on-chain (testnet)' : 'Retry on-chain record'; b.disabled = false; if (e.code !== 4001) popup(e.message?.slice(0, 90) || 'Transaction failed', '#ff7878'); }
   };
 }
@@ -2361,8 +2357,8 @@ async function connectWallet() {
 async function updateWallet(accounts) {
   const id = ++walletReadId; heldTokens = 0; balanceReadAt = 0;
   wallet = /^0x[0-9a-f]{40}$/i.test(accounts?.[0] || '') ? accounts[0] : null;
-  walletInfo = wallet ? 'Token not launched yet · optional read-only connection' : '';
-  renderWallet();
+  walletInfo = wallet ? 'Signed in · reading balances…' : ''; wcWrun = wcEth = '…';
+  renderWallet(); if (wallet) readWalletCard(wallet);
   if (!wallet || !tokenLinks()) return;
   try {
     const { dec, bal } = await readTokenBalance(wallet); if (id !== walletReadId) return;
@@ -2371,16 +2367,29 @@ async function updateWallet(accounts) {
   } catch (e) { if (id !== walletReadId) return; walletInfo = 'Balance unavailable · play continues without a holder boost'; }
   renderWallet();
 }
-async function clearRankedSession() { rankedSession = null; renderOnline(); try { await api('auth/logout', {}); } catch {} }
+function clearRankedSession() { rankedSession = null; renderOnline(); }
 // Account changes come from Privy (email login + embedded wallet); browser-extension wallets are never used.
 let lastPrivyAddr = null;
-function onPrivyChange(a) { if (a === lastPrivyAddr) return; const was = lastPrivyAddr; lastPrivyAddr = a; updateWallet(a ? [a] : []); if (was && rankedSession && rankedSession !== a) clearRankedSession(); }
+function onPrivyChange(a) { if (a === lastPrivyAddr) return; lastPrivyAddr = a; updateWallet(a ? [a] : []); if (rankedSession && rankedSession !== a) clearRankedSession(); }
 setInterval(() => { if (wallet && !document.hidden && tokenLinks()) updateWallet([wallet]); }, 45000);
 function renderWallet() {
   $('walletBtn').textContent = wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : 'Sign in with email';
   $('walletInfo').textContent = wallet ? walletInfo : 'Email sign-in · secure wallet by Privy';
+  $('walletCard').hidden = !wallet; if (!wallet) return;
+  const links = tokenLinks();
+  $('wcAddr').textContent = wallet; $('wcExplorer').href = `${CHAIN.explorer}/address/${wallet}`;
+  $('wcBuy').hidden = !links; if (links) $('wcBuy').href = links.page;
+  $('wcWrun').textContent = wcWrun; $('wcEth').textContent = wcEth;
 }
-$('walletBtn').addEventListener('click', e => { e.stopPropagation(); connectWallet(); });
+let wcWrun = '…', wcEth = '…';
+async function readWalletCard(addr) { // read-only: both balances straight from the chain
+  try { const wei = BigInt(await rpc('eth_getBalance', [addr, 'latest'])); wcEth = fmtUnits(wei, 18); } catch { wcEth = 'unavailable'; }
+  try { if (tokenLinks()) { const { dec, bal } = await readTokenBalance(addr); wcWrun = fmtUnits(bal, dec); } } catch { wcWrun = 'unavailable'; }
+  if (wallet === addr) renderWallet();
+}
+$('walletBtn').addEventListener('click', e => { e.stopPropagation(); if (wallet) $('walletCard').hidden = !$('walletCard').hidden; else connectWallet(); });
+$('wcCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(wallet); $('wcCopy').textContent = 'Copied'; setTimeout(() => $('wcCopy').textContent = 'Copy', 1500); } catch {} });
+$('wcOut').addEventListener('click', async () => { try { await WickWallet.logout(); } catch {} });
 $('termsBtn').addEventListener('click', () => $('terms').classList.remove('hidden'));
 $('termsClose').addEventListener('click', () => $('terms').classList.add('hidden'));
 
@@ -3195,4 +3204,4 @@ window.__cp = { buildRunner, VIBERS, setViber, THREE, get runner() { return runn
   advance(sec) { for (let s = 0; s < sec; s += 1 / 60) tick(1 / 60, performance.now()); }, // test hook: run frames without rAF
   get finishZ() { return finishZ; }, get lastRun() { return game.lastRun; }, get runLog() { return runLog; }, result: runResult, retryCheckpoint, resolveDeath, replayRun, tick, get camera() { return camera; }, render: () => composer.render(), Sfx, setArena(c) { level = arenaLevel(sanitizeArena(c)); }, // camera/render/Sfx: frame-by-frame video capture (video/capture.mjs)
   verifyArena, arenaMessage, sanitizeArena, tokenCreators };
-if (!VERIFY_MODE) api('status').then(s => { if (s.scores) SCORES.address ||= s.scores; onlineAvailable = s.online && s.rules === RULES_VERSION; rankedSession = s.wallet; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());
+if (!VERIFY_MODE) api('status').then(s => { if (s.scores) SCORES.address ||= s.scores; onlineAvailable = s.online && s.rules === RULES_VERSION; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());
