@@ -2111,8 +2111,8 @@ const CHAIN = { id: 46630, name: 'Robinhood Chain Testnet', rpc: 'https://rpc.te
 // the site shows the buy button and contract address only when both pass the checks in tokenLinks().
 const TOKEN = {
   symbol: 'WRUN',
-  address: null,   // '0x…' contract address from our vibe/vibe token page
-  page: null,      // 'https://testnet.vibevibe.fun/…' our token page (the bonding curve, and the pool link after graduation)
+  address: '0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F', // $WRUN on Robinhood Chain testnet (1B supply, 18 decimals)
+  page: 'https://testnet.vibevibe.fun/token/0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F',      // 'https://testnet.vibevibe.fun/…' our token page (the bonding curve, and the pool link after graduation)
   graduated: false, // flip to true after graduation (trading then runs on the Uniswap v4 pool, still reached from the token page)
   // HOLDER BOOST — on cosmetic XP only (progression), never on leaderboard scores: boards stay pure skill.
   // ponytail: fresh balance only for cosmetic XP; sustained-ownership perks require snapshots.
