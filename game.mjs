@@ -943,7 +943,6 @@ function buildRunner(v, addToScene = true) {
     for (let n = -2; n <= 2; n++) { blk(head, .085, .065, .03, v.head, n * .115, .185, FZ + .055, false); blk(head, .085, .055, .03, shade, n * .115, .105, FZ + .055, false); }
     blk(head, .72, .07, .07, shade, 0, .035, FZ - .01, false);                                          // jaw line
     blk(head, .025, .22, .02, deep, .29, .79, FZ + .012, false); blk(head, .08, .025, .02, deep, .25, .69, FZ + .012, false); // crack
-    blk(head, .03, .5, .02, deep, .05, .6, -FZ - .012, false); blk(head, .3, .025, .02, deep, -.08, .62, -FZ - .012, false); // sutures on the back of the skull
     blk(head, .03, .02, HD * .7, deep, .05, HH + .012, -.08, false);
     // ribcage: bone torso with dark gaps, sternum, pelvis band, spine down the back
     for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) blk(hips, .24, .028, .03, INK, sd * .15, BH - .09 - n * .085, BD / 2 + .012, false);
@@ -974,11 +973,40 @@ function buildRunner(v, addToScene = true) {
     for (const y of [.26, .14]) blk(hips, .06, .06, .03, 0xf3d9a0, .07, y, BD / 2 + .02, false);
   }
   // Reflective courier harness and compact pack give the crew a shared district identity.
-  blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4);
+  if (!v.haunt) blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4); // the Haunt crew carries its own back piece (below)
   if (v.face !== 'skull') for (const side of [-1, 1]) { blk(hips, .075, .3, .035, v.accent, side * .22, BH / 2, BD / 2 + .04); blk(head, .16, .07, .035, v.accent, side * .32, .1, FZ + .06); } // Bones shows his ribcage instead
   // Shared pack clasp and reflective boot trim tie the crew together from behind.
-  blk(hips, .24, .055, .035, v.accent, 0, BH / 2 + .08, -.53, false);
-  for (const side of [-1,1]) blk(hips, .055, .055, .035, 0xd5e2e8, side * .15, BH / 2 - .06, -.53, false);
+  if (!v.haunt) { blk(hips, .24, .055, .035, v.accent, 0, BH / 2 + .08, -.53, false); for (const side of [-1,1]) blk(hips, .055, .055, .035, 0xd5e2e8, side * .15, BH / 2 - .06, -.53, false); }
+  // BACKS of the Haunt crew: the camera rides behind the runner, so this is what players see most
+  const BZ = -FZ - .02; // just behind the back of the head
+  if (v.face === 'skull') {
+    // a little coffin pack: dark wood, bone cross, green glow seams
+    const wood = 0x3b2a22, cz = -.42;
+    blk(hips, .44, .5, .2, wood, 0, BH / 2 + .06, cz); blk(hips, .32, .12, .2, wood, 0, BH / 2 + .36, cz);
+    blk(hips, .07, .3, .03, v.head, 0, BH / 2 + .1, cz - .115, false); blk(hips, .22, .07, .03, v.head, 0, BH / 2 + .16, cz - .115, false);
+    for (const sd of [-1, 1]) glow(blk(hips, .025, .48, .025, v.eye, sd * .2, BH / 2 + .06, cz - .105, false));
+    // back of the skull: a glowing green fracture and two vent holes
+    [[-.26, .74, .2, .04], [-.15, .64, .04, .2], [-.04, .56, .2, .04], [.07, .47, .04, .18], [.18, .39, .2, .04], [.27, .33, .04, .1]].forEach(([x, y, w, h]) => { blk(head, w + .04, h + .04, .015, INK, x, y, BZ + .006, false); glow(blk(head, w, h, .02, v.eye, x, y, BZ, false)); }); // glowing fracture with a dark edge
+    for (const sd of [-1, 1]) blk(head, .1, .1, .02, INK, sd * .28, .2, BZ, false);
+  }
+  if (v.face === 'jack') {
+    // a bat carved through the back of the pumpkin, lit from inside
+    blk(head, .62, .3, .02, 0x4a1c05, 0, .52, BZ + .008, false);
+    glow(blk(head, .12, .16, .03, v.eye, 0, .52, BZ, false));                                   // bat body
+    for (const sd of [-1, 1]) {
+      glow(blk(head, .04, .05, .03, v.eye, sd * .04, .62, BZ, false));                          // ears
+      glow(blk(head, .14, .07, .03, v.eye, sd * .13, .56, BZ, false));                          // wing, stepped down
+      glow(blk(head, .1, .06, .03, v.eye, sd * .24, .51, BZ, false));
+      glow(blk(head, .05, .05, .03, v.eye, sd * .28, .46, BZ, false));
+    }
+    // a lantern pack: green iron cage with a flickering flame
+    const lz = -.42, iron = 0x24402a;
+    blk(hips, .34, .06, .2, iron, 0, BH / 2 + .26, lz); blk(hips, .34, .06, .2, iron, 0, BH / 2 - .14, lz);
+    for (const x of [-.15, .15]) for (const z of [lz - .08, lz + .08]) blk(hips, .04, .36, .04, iron, x, BH / 2 + .06, z, false);
+    glow(blk(hips, .2, .28, .1, 0xff9a2e, 0, BH / 2 + .06, lz)); glow(blk(hips, .08, .12, .06, 0xfff2b0, 0, BH / 2 + .1, lz - .04, false));
+    blk(hips, .08, .1, .08, iron, 0, BH / 2 + .34, lz, false);                                    // handle
+    for (const sd of [-1, 1]) { const v1 = blk(hips, .05, .3, .03, v.leaf, sd * .21, BH / 2, -BD / 2 - .015, false); v1.rotation.z = sd * .2; } // vine on the jacket back
+  }
   // TOP piece on its own pivot so it can jiggle
   const top = new THREE.Group(); top.position.y = HH; head.add(top); // rides on the head, so it follows nods and looks
   if (v.top === 'hood') { blk(top, 1.1, .16, .96, v.body, 0, .02, -.03); for (const side of [-1, 1]) blk(head, .13, .65, .28, v.body, side * .54, .5, .25); blk(top, .36, .045, .14, v.accent, 0, .12, .35); }
