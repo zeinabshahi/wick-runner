@@ -901,7 +901,6 @@ function buildRunner(v, addToScene = true) {
   } else blk(head, HW, HH, HD, v.head, 0, HH / 2, 0);
   if (v.face !== 'mask' && !v.haunt) blk(head, HW + .004, .066, HD + .004, tint(v.head, 1.15), 0, HH - .028, 0);       // lighter top rim; sits a hair proud so it never z-fights the head
   const eye = (...a) => { const m = blk(head, ...a, false); eyes.push(m); return m; };
-  let capeRef = null;
   const glows = [], glow = m => { const c = m.material.color.getHex(); m.material = new THREE.MeshBasicMaterial({ color: c }); m.userData.c = c; glows.push(m); return m; }; // unlit (reads in the dark), own material so it can flicker
   const pupils = [], pupil = (...a) => { const m = eye(...a); m.userData.base = m.position.clone(); pupils.push(m); return m; }; // eyes that look where the head looks
 
@@ -977,43 +976,13 @@ function buildRunner(v, addToScene = true) {
     for (const sd of [-1, 1]) pix(HEART, sd * .19, .68);
     pix(['X...........X', 'XX.........XX', 'XXX.X.X.X.XXX', '.XXXXXXXXXXX.', '..XXXXXXXXX..', '....XXXXX....'], 0, .4);
     for (const sd of [-1, 1]) { const c = blk(hips, .26, .05, .16, v.leaf, sd * .15, BH - .01, BD / 2 - .02, false); c.rotation.z = sd * .25; } // leaf collar
-    blk(hips, .03, BH - .1, .02, v.accent, 0, BH / 2, BD / 2 + .012, false);
-    for (const y of [.26, .14]) blk(hips, .06, .06, .03, 0xf3d9a0, .07, y, BD / 2 + .02, false);
   }
   // Reflective courier harness and compact pack give the crew a shared district identity.
-  if (!v.haunt) blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4); // the Haunt crew carries its own back piece (below)
+  blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4);
   if (v.face !== 'skull') for (const side of [-1, 1]) { blk(hips, .075, .3, .035, v.accent, side * .22, BH / 2, BD / 2 + .04); if (!v.haunt) blk(head, .16, .07, .035, v.accent, side * .32, .1, FZ + .06); } // Bones shows his ribcage instead
   // Shared pack clasp and reflective boot trim tie the crew together from behind.
-  if (!v.haunt) { blk(hips, .24, .055, .035, v.accent, 0, BH / 2 + .08, -.53, false); for (const side of [-1,1]) blk(hips, .055, .055, .035, 0xd5e2e8, side * .15, BH / 2 - .06, -.53, false); }
-  // BACKS of the Haunt crew: the camera rides behind the runner, so this is what players see most
-  const BZ = -FZ - .02; // just behind the back of the head
-  if (v.face === 'skull') {
-    // jacket back: a glowing spine and ribs, like an x-ray
-    const bz = -BD / 2 - .012;
-    glow(blk(hips, .05, BH - .06, .02, v.accent, 0, BH / 2 + .02, bz, false));
-    for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) { const r = glow(blk(hips, .22, .03, .02, v.accent, sd * .13, BH - .1 - n * .09, bz, false)); r.rotation.z = sd * -.18; }
-    glow(blk(hips, .16, .05, .02, v.accent, 0, .1, bz, false));                                          // pelvis
-    // back of the skull: a glowing fracture
-    [[-.24, .78, .18, .035], [-.14, .69, .035, .18], [-.04, .61, .18, .035], [.06, .53, .035, .16], [.15, .46, .18, .035]].forEach(([x, y, w, h]) => { blk(head, w + .035, h + .035, .015, INK, x, y, BZ + .006, false); glow(blk(head, w, h, .02, v.eye, x, y, BZ, false)); });
-  }
-  if (v.face === 'jack') {
-    // a carved bat through the back of the pumpkin, lit from inside
-    blk(head, .6, .3, .02, 0x4a1c05, 0, .58, BZ + .008, false);
-    glow(blk(head, .12, .16, .03, v.eye, 0, .58, BZ, false));
-    for (const sd of [-1, 1]) { glow(blk(head, .04, .05, .03, v.eye, sd * .04, .68, BZ, false)); glow(blk(head, .14, .07, .03, v.eye, sd * .13, .62, BZ, false)); glow(blk(head, .1, .06, .03, v.eye, sd * .24, .57, BZ, false)); glow(blk(head, .05, .05, .03, v.eye, sd * .28, .52, BZ, false)); }
-    // tattered cape on its own pivot at the shoulders, so it can stream behind on the run
-    const cape = new THREE.Group(); cape.position.set(0, BH - .02, -BD / 2 - .03); hips.add(cape); capeRef = cape;
-    const outer = 0x183d28, lining = v.accent;
-    blk(cape, .84, .5, .035, outer, 0, -.25, -.02); blk(cape, .8, .46, .02, lining, 0, -.24, .015, false);   // outer + orange lining
-    [[-.33, .12], [-.17, .2], [0, .1], [.17, .22], [.33, .13]].forEach(([x, h]) => blk(cape, .15, h, .035, outer, x, -.5 - h / 2, -.02)); // ragged hem
-    for (const sd of [-1, 1]) blk(cape, .08, .08, .05, v.leaf, sd * .36, -.02, 0, false);               // leaf clasps
-    for (const sd of [-1, 1]) blk(cape, .06, .52, .03, lining, sd * .4, -.26, -.05, false);           // orange piping down the edges
-    blk(cape, .86, .05, .03, lining, 0, -.02, -.05, false);
-    for (const [x, y] of [[-.22, -.2], [.18, -.32], [-.05, -.4], [.3, -.14], [-.32, -.36]]) glow(blk(cape, .05, .05, .02, 0xffd84a, x, y, -.05, false)); // ember sparks in the cloth
-    // little lantern on the hip
-    const iron = 0x24402a; blk(hips, .16, .03, .16, iron, -.5, .34, .02); blk(hips, .16, .03, .16, iron, -.5, .12, .02);
-    glow(blk(hips, .11, .17, .11, 0xff9a2e, -.5, .23, .02)); blk(hips, .03, .09, .03, iron, -.5, .41, .02, false);
-  }
+  blk(hips, .24, .055, .035, v.accent, 0, BH / 2 + .08, -.53, false);
+  for (const side of [-1,1]) blk(hips, .055, .055, .035, 0xd5e2e8, side * .15, BH / 2 - .06, -.53, false);
   // TOP piece on its own pivot so it can jiggle
   const top = new THREE.Group(); top.position.y = HH; head.add(top); // rides on the head, so it follows nods and looks
   if (v.top === 'hood') { blk(top, 1.1, .16, .96, v.body, 0, .02, -.03); for (const side of [-1, 1]) blk(head, .13, .65, .28, v.body, side * .54, .5, .25); blk(top, .36, .045, .14, v.accent, 0, .12, .35); }
@@ -1049,7 +1018,7 @@ function buildRunner(v, addToScene = true) {
   if (v.item === 'canister') { blk(hips, .25, .4, .25, v.accent, -.43, .32, -.35); blk(hips, .13, .08, .15, INK, -.43, .56, -.35); blk(hips, .07, .05, .08, 0xd5e2e8, -.43, .62, -.31, false); }
 
   const R = { root, flip, flipT: -1, flipDur: 1, flipAxis: 'x', flipDir: 1, rig, hips, head, top, j: 0, jv: 0, jr: 0, jrv: 0, pvy: 0, phz: 0, lastStep: 0, hipBase: HIP,
-    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, glows, cape: capeRef, blinkSeed: Math.random() * 3 };
+    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, glows, blinkSeed: Math.random() * 3 };
   if (v.face === 'jack') { const l = new THREE.PointLight(0xffa040, 1.4, 3.2, 2); l.position.set(0, HH * .45, FZ + .5); head.add(l); R.candle = l; } // the candle spills warm light on the course
   root.scale.setScalar(1.06);
   root.traverse(o => { if (o.isMesh) o.castShadow = o.material !== HULL; }); // outlines don't need their own shadow
@@ -2817,7 +2786,6 @@ function updateRunner(dt, t) {
   if (act.yaw !== undefined) R.head.rotation.y = damp(R.head.rotation.y, act.yaw, 18, dt);
   if (act.roll !== undefined) R.head.rotation.z = damp(R.head.rotation.z, act.roll, 10, dt);
   R.top.rotation.z = damp(R.top.rotation.z, act.top ?? act.topZ ?? 0, 14, dt);
-  if (R.cape) R.cape.rotation.x = damp(R.cape.rotation.x, -(.12 + clamp(Math.hypot(p.vel.x, p.vel.z) / 20, 0, 1) * .75 + (p.onGround ? 0 : .2)) + Math.sin(t * 9) * .04, 7, dt); // the cape streams with speed
   for (const q of R.pupils) { q.position.x = q.userData.base.x + R.head.rotation.y * .07; q.position.y = q.userData.base.y - R.head.rotation.x * .06; }
   if (R.glows.length) { // candle flicker for Jack, a slow soul-pulse for Bones
     const f = R.candle ? .82 + .12 * Math.sin(t * 11.3) * Math.sin(t * 7.1 + 1) + .06 * Math.sin(t * 23) : .8 + .2 * Math.sin(t * 2.4);
