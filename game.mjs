@@ -687,6 +687,12 @@ function resetCourse() {
   spawn.set(0, t0, 8);
   setWatermark(level); applyTheme(level.theme);
   haunt.group.visible = !!level.haunt; skyline.visible = !level.haunt; hemi.intensity = 1.4; Sfx.setScene(level.haunt ? 'haunt' : 'main');
+  syncHauntCrew();
+}
+// The Haunt crew (Bones, Jack) only runs the Halloween course; leaving it puts back the last regular pick.
+function syncHauntCrew() {
+  document.querySelectorAll('.viber[data-haunt]').forEach(b => b.hidden = !level.haunt);
+  if (VIBERS[viberIdx].haunt && !level.haunt) { let m = 0; try { m = clamp(Math.trunc(+localStorage.getItem('cp-viber-main') || 0), 0, 3); } catch (e) {} setViber(m); }
 }
 const keepIf = (a, f) => { let j = 0; for (const x of a) if (f(x)) a[j++] = x; a.length = j; }; // in-place filter
 // Keep ~60 candles built ahead of the runner; in endless, drop everything ~30 candles behind.
@@ -853,13 +859,12 @@ const VIBERS = [
   { name: 'Relay', bio: 'RELAY / the signal runner. Quiet focus. Clean connections.', accent: 0xffc65e, head: 0xd5e2e8, body: 0x192c45, panel: 0xd5e2e8, arm: 0x253e59, cuff: 0xd5e2e8, cuffH: .14, feet: 0x162438, sole: 0xffc65e, top: 'comms', face: 'signal', eye: 0x9eeaff, bg: '#d9e4ee' },
   { name: 'Ember', bio: 'EMBER / the rooftop artist. Leave a bright line behind.', accent: 0xff859c, head: 0xa8513e, body: 0x202a36, arm: 0xa8513e, cuff: 0xd5e2e8, cuffBand: 0x15161a, feet: 0x162438, sole: 0xff859c, top: 'mohawk', hair: 0x573a3b, face: 'big', eye: 0xdedacd, item: 'canister', bg: '#d9e4ee' },
   // Haunt the Chain crew
-  { name: 'Bones', bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xece6d2, body: 0xe2dbc4, arm: 0xe2dbc4, cuff: 0xc9c0a4, feet: 0x2b3038, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
-  { name: 'Jack', bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xf2801f, body: 0x2f6b3a, arm: 0x2f6b3a, cuff: 0xf2801f, feet: 0x1f2a22, sole: 0xffa62e, top: 'stem', stem: 0x6b5a2a, leaf: 0x86c442, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
+  { name: 'Bones', haunt: true, bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xece6d2, body: 0xe2dbc4, arm: 0xe2dbc4, cuff: 0xc9c0a4, feet: 0x2b3038, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
+  { name: 'Jack', haunt: true, bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xf2801f, body: 0x2f6b3a, arm: 0x2f6b3a, cuff: 0xf2801f, feet: 0x1f2a22, sole: 0xffa62e, top: 'stem', stem: 0x6b5a2a, leaf: 0x86c442, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
 ];
 const INK = 0x15161a, OUTLINE = new THREE.LineBasicMaterial({ color: INK });
 // Toon shading (3 crisp light bands) + an inverted-hull ink outline: the thick, even black silhouette of the art.
 const toonRamp = (() => { const t = new THREE.DataTexture(new Uint8Array([105, 185, 255]), 3, 1, THREE.RedFormat); t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true; return t; })();
-const glowCache = {}, glowMat = c => glowCache[c] ||= new THREE.MeshBasicMaterial({ color: c });
 const lamCache = {}, lam = c => lamCache[c] ||= new THREE.MeshToonMaterial({ color: c, gradientMap: toonRamp });
 const HULL = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
 function blk(parent, w, h, d, color, x, y, z, ink = true) { // one outlined block (ink=false: small face details, a thick rim would swallow them)
@@ -881,7 +886,7 @@ function buildRunner(v, addToScene = true) {
   blk(head, HW, HH, HD, v.head, 0, HH / 2, 0);
   if (v.face !== 'mask') blk(head, HW + .004, .066, HD + .004, tint(v.head, 1.15), 0, HH - .028, 0);       // lighter top rim; sits a hair proud so it never z-fights the head
   const eye = (...a) => { const m = blk(head, ...a, false); eyes.push(m); return m; };
-  const glow = m => { m.material = glowMat(m.material.color.getHex()); return m; }; // unlit, so carved light and eye glow read in the dark
+  const glows = [], glow = m => { const c = m.material.color.getHex(); m.material = new THREE.MeshBasicMaterial({ color: c }); m.userData.c = c; glows.push(m); return m; }; // unlit (reads in the dark), own material so it can flicker
   const pupils = [], pupil = (...a) => { const m = eye(...a); m.userData.base = m.position.clone(); pupils.push(m); return m; }; // eyes that look where the head looks
 
   if (v.face === 'mask') { // Scout: cream headband, two black eye blocks with green pupils, grey band + mouth plate
@@ -954,7 +959,7 @@ function buildRunner(v, addToScene = true) {
     for (const sd of [-1, 1]) {
       blk(head, .36, .27, .025, dark, sd * .24, .51, FZ + .012, false);
       glow(blk(head, .3, .07, .05, v.eye, sd * .24, .44, FZ + .03, false)); glow(blk(head, .2, .07, .05, v.eye, sd * .24, .51, FZ + .03, false));
-      glow(eye(.09, .07, .05, 0xfff2b0, sd * .24, .58, FZ + .03));
+      glow(blk(head, .09, .07, .05, 0xfff2b0, sd * .24, .58, FZ + .03, false));                    // carved eyes don't blink
     }
     blk(head, .14, .1, .025, dark, 0, .34, FZ + .012, false); glow(blk(head, .1, .07, .05, v.eye, 0, .34, FZ + .03, false)); // nose
     blk(head, .76, .21, .025, dark, 0, .17, FZ + .012, false);
@@ -1007,7 +1012,8 @@ function buildRunner(v, addToScene = true) {
   if (v.item === 'canister') { blk(hips, .25, .4, .25, v.accent, -.43, .32, -.35); blk(hips, .13, .08, .15, INK, -.43, .56, -.35); blk(hips, .07, .05, .08, 0xd5e2e8, -.43, .62, -.31, false); }
 
   const R = { root, flip, flipT: -1, flipDur: 1, flipAxis: 'x', flipDir: 1, rig, hips, head, top, j: 0, jv: 0, jr: 0, jrv: 0, pvy: 0, phz: 0, lastStep: 0, hipBase: HIP,
-    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, blinkSeed: Math.random() * 3 };
+    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, glows, blinkSeed: Math.random() * 3 };
+  if (v.face === 'jack') { const l = new THREE.PointLight(0xffa040, 1.4, 3.2, 2); l.position.set(0, HH * .45, FZ + .5); head.add(l); R.candle = l; } // the candle spills warm light on the course
   root.scale.setScalar(1.06);
   root.traverse(o => { if (o.isMesh) o.castShadow = o.material !== HULL; }); // outlines don't need their own shadow
   if (addToScene) scene.add(root);
@@ -1021,7 +1027,7 @@ buildPicker();
 
 function setViber(i) {
   viberIdx = i; disposeObj(runner.root); runner = buildRunner(VIBERS[i]);
-  try { localStorage.setItem('cp-viber', i); } catch (e) {}
+  try { localStorage.setItem('cp-viber', i); if (!VIBERS[i].haunt) localStorage.setItem('cp-viber-main', i); } catch (e) {}
   document.querySelectorAll('.viber').forEach((b, j) => b.classList.toggle('on', j === i));
   if ($('runnerNote')) $('runnerNote').textContent = VIBERS[i].bio;
 }
@@ -1035,10 +1041,12 @@ function buildPicker() {
     const model = buildRunner(v, false).root; sc.add(model); r.render(sc, cam);
     const b = document.createElement('button'); b.className = 'viber' + (i === viberIdx ? ' on' : ''); b.style.background = v.bg;
     b.innerHTML = `<img src="${r.domElement.toDataURL()}" alt=""><span>${v.name}</span>`;
-    b.addEventListener('click', e => { e.stopPropagation(); if (profile.xp >= VIBER_XP[i]) setViber(i); });
+    if (v.haunt) b.dataset.haunt = '1';
+    b.addEventListener('click', e => { e.stopPropagation(); if (profile.xp >= VIBER_XP[i] && (!v.haunt || level.haunt)) setViber(i); });
     pick.append(b); disposeObj(model);
   });
   r.dispose();
+  syncHauntCrew();
 }
 
 /* Ribbon trail: camera-facing strip through the last N positions */
@@ -2773,6 +2781,11 @@ function updateRunner(dt, t) {
   if (act.roll !== undefined) R.head.rotation.z = damp(R.head.rotation.z, act.roll, 10, dt);
   R.top.rotation.z = damp(R.top.rotation.z, act.top ?? act.topZ ?? 0, 14, dt);
   for (const q of R.pupils) { q.position.x = q.userData.base.x + R.head.rotation.y * .07; q.position.y = q.userData.base.y - R.head.rotation.x * .06; }
+  if (R.glows.length) { // candle flicker for Jack, a slow soul-pulse for Bones
+    const f = R.candle ? .82 + .12 * Math.sin(t * 11.3) * Math.sin(t * 7.1 + 1) + .06 * Math.sin(t * 23) : .8 + .2 * Math.sin(t * 2.4);
+    for (const g of R.glows) g.material.color.setHex(g.userData.c).multiplyScalar(f);
+    if (R.candle) R.candle.intensity = 1.4 * f;
+  }
   Sfx.wind(game.state === 'play' ? clamp((-p.vel.y - 9) / 40, 0, .12) + (p.boostT > 0 ? .03 : 0) : 0);
   const blink = (t + R.blinkSeed) % 3.4 < .11; // blink every few seconds
   // expressions: wide eyes when falling fast, squint on a hard landing or while stunned, a bit bigger mid-flip
@@ -3145,7 +3158,7 @@ function tick(dt, now) {
 
 /* LANDING — the first screen: a live 3D hero of the runner on a green candle (a looping routine of idle, backflip,
    dance moves, a spin and each viber's own signature move; the head follows the pointer; tap to drop in the next character). Its own small renderer, which only animates while the landing is visible. */
-const heroState = { i: viberIdx };
+const heroState = { i: VIBERS[viberIdx].haunt ? 0 : viberIdx };
 const hero = (() => {
   if (VERIFY_MODE) return { start() {} };
   const cv = $('heroCanvas'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
@@ -3176,7 +3189,7 @@ const hero = (() => {
   let R = null, dropT = -1e9, mx = 0, my = 0;
   const setViberHero = i => { if (R) disposeObj(R.root); R = buildRunner(VIBERS[i], false); sc.add(R.root); $('heroName').textContent = VIBERS[i].name; };
   setViberHero(heroState.i);
-  cv.addEventListener('click', () => { heroState.i = (heroState.i + 1) % VIBERS.length; setViberHero(heroState.i); dropT = performance.now(); }); // the next viber drops in
+  cv.addEventListener('click', () => { heroState.i = (heroState.i + 1) % VIBERS.filter(v => !v.haunt).length; setViberHero(heroState.i); dropT = performance.now(); }); // the next viber drops in
   cv.addEventListener('keydown', e => { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); e.stopPropagation(); cv.click(); } });
   addEventListener('pointermove', e => { const b = cv.getBoundingClientRect(); mx = clamp((e.clientX - b.left) / b.width * 2 - 1, -1, 1); my = clamp((e.clientY - b.top) / b.height * 2 - 1, -1, 1); });
   let running = false, t0 = performance.now();
