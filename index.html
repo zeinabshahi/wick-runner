@@ -1,0 +1,994 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Run, flip and grind across a living candlestick skyline. Free browser parkour, daily challenges and community arenas. No wallet needed.">
+<meta name="theme-color" content="#0b1018">
+<title>Wick Runner — Run your line</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgdmlld0JveD0iMCAwIDY0IDY0IiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IldpY2sgUnVubmVyIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSIxMyIgZmlsbD0iIzBiMTAxOCIvPjxnIGZpbGw9IiNkOWY2NmYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDkgMTUpIHNjYWxlKC4zMikiPjxwYXRoIGQ9Ik0xNCAyMEgzNUw0NiA2M0w2MSAzNkg3OEw5MCA2M0wxMDQgMTNIMTI2TDEwMyA5OUg4MUw2OSA3M0w1NiA5OUgzNFoiLz48cGF0aCBkPSJNMjAgNkgyOFYyMEgyMFpNMTEwIDBIMTE4VjEzSDExMFoiLz48L2c+PC9zdmc+">
+<meta property="og:title" content="Wick Runner — Run your line">
+<meta property="og:description" content="Free browser parkour on a candlestick skyline. Jump, dodge and find your flow.">
+<meta property="og:image" content="/assets/brand/wick-runner/link-card-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Wick Runner — Run your line">
+<meta name="twitter:description" content="Free browser parkour on a candlestick skyline. Jump. Dodge. Flow.">
+<meta name="twitter:image" content="/assets/brand/wick-runner/link-card-1200x630.png">
+<meta name="twitter:image:alt" content="Wick Runner characters jumping across a candlestick skyline">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+  /* ---------- design tokens ---------- */
+  :root {
+    --bg:#0d1017; --panel:rgba(20,24,34,.78); --panel-solid:#161a24; --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
+    --text:#eceae3; --muted:#8b91a1; --lime:#dcf513; --green:#26a69a; --red:#ef5350; --gold:#f5c542; --blue:#2962ff;
+    --r:14px; --mono:'JetBrains Mono', ui-monospace, monospace; --sans:'Space Grotesk', system-ui, sans-serif;
+    --cyan:var(--lime); --mag:var(--text);
+  }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans);
+    user-select:none; -webkit-user-select:none; touch-action:none; -webkit-font-smoothing:antialiased; }
+  canvas { display:block; }
+  button { font:inherit; }
+  .hidden { display:none !important; }
+  .num { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .lbl { font:500 10px var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--muted); }
+  .glow { text-shadow:0 1px 3px rgba(0,0,0,.6); }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+
+  /* ---------- screen effects ---------- */
+  #flash { position:fixed; inset:0; pointer-events:none; opacity:0; }
+  #flowfx { position:fixed; inset:0; pointer-events:none; opacity:0; transition:opacity .6s; box-shadow:inset 0 0 0 2px rgba(220,245,19,.35); }
+  #flowfx.on { opacity:1; }
+  @keyframes flowpulse { 50% { box-shadow:inset 0 0 60px rgba(220,245,19,.2); } }
+  #vignette { display:none; }
+
+  /* ---------- HUD ---------- */
+  #hud { position:fixed; inset:0; pointer-events:none; }
+  #tl { position:absolute; left:18px; top:18px; padding:12px 16px 12px 14px; min-width:220px; }
+  #ticker { font:600 11px var(--mono); letter-spacing:.06em; margin-bottom:4px; transition:color .2s; }
+  #score { font:700 34px var(--mono); font-variant-numeric:tabular-nums; color:var(--text); line-height:1.05; letter-spacing:-.02em; }
+  #combo { min-height:24px; margin-top:6px; transition:transform .08s; }
+  #combo:not(:empty) { display:inline-flex; align-items:baseline; gap:8px; padding:3px 10px; border-radius:999px; background:rgba(220,245,19,.14); color:var(--lime); font:700 15px var(--mono); }
+  #combo small { font-size:12px; opacity:.85; }
+  #tr { position:absolute; right:18px; top:18px; padding:12px 16px; text-align:right; min-width:170px; }
+  #time { font:700 28px var(--mono); font-variant-numeric:tabular-nums; line-height:1.1; }
+  #prog { margin-top:2px; }
+  #tip { position:absolute; left:50%; bottom:86px; transform:translateX(-50%); padding:10px 16px; font:600 14px var(--sans); white-space:nowrap; animation:tipin .25s ease-out; }
+  @keyframes tipin { from { opacity:0; transform:translate(-50%, 8px); } }
+  /* death: red vignette pulse, the card slams in, game-over results rise with a shake */
+  body.dying::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:4; background:radial-gradient(ellipse at center, transparent 35%, rgba(255,40,60,.55)); animation:dieflash 1.5s ease-out forwards; }
+  @keyframes dieflash { 0% { opacity:0 } 10% { opacity:1 } 30% { opacity:.55 } 100% { opacity:.75 } }
+  #deathcard b { animation:slam .45s cubic-bezier(.2,1.6,.4,1) .28s both; }
+  #deathcard span { animation:tipin .3s ease-out .55s both; }
+  @keyframes slam { 0% { transform:scale(2.6); opacity:0; filter:blur(8px) } 60% { transform:scale(.94); opacity:1; filter:none } 100% { transform:scale(1) } }
+  #end.over .result { animation:overIn .6s cubic-bezier(.2,1.3,.4,1) both; }
+  #end.over #endTitle { animation:overShake .5s ease-out .35s both; }
+  @keyframes overIn { 0% { transform:translateY(40px) scale(.94); opacity:0 } 100% { transform:none; opacity:1 } }
+  @keyframes overShake { 0%,100% { transform:none } 20% { transform:translateX(-8px) } 40% { transform:translateX(7px) } 60% { transform:translateX(-4px) } 80% { transform:translateX(2px) } }
+  @media (prefers-reduced-motion: reduce) { body.dying::after, #deathcard b, #deathcard span, #end.over .result, #end.over #endTitle { animation:none } }
+  #deathcard { position:absolute; left:50%; top:36%; transform:translate(-50%,-50%); text-align:center; animation:tipin .3s ease-out; }
+  #deathcard b { display:block; font:700 clamp(40px, 8vw, 72px)/1 var(--sans); letter-spacing:-.03em; color:var(--red); text-shadow:0 4px 24px rgba(0,0,0,.5); }
+  #deathcard span { display:inline-block; margin-top:10px; font:500 13px var(--mono); color:var(--text); opacity:.75; }
+  #split { font:700 13px var(--mono); min-height:16px; }
+  #split.ahead { color:var(--green); } #split.behind { color:var(--red); }
+  #progbar { height:4px; margin-top:8px; border-radius:2px; background:var(--line); overflow:hidden; }
+  #progbar i { display:block; height:100%; width:0; background:var(--lime); border-radius:2px; transition:width .2s linear; }
+  #bc { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); padding:10px 18px; display:flex; align-items:center; gap:14px; }
+  #speed { font:700 26px var(--mono); font-variant-numeric:tabular-nums; min-width:46px; text-align:right; color:var(--text); }
+  #sbar { width:180px; height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
+  #sbar i { display:block; height:100%; width:0; background:linear-gradient(90deg, var(--green), var(--lime)); border-radius:3px; }
+  #hint { position:absolute; left:18px; bottom:18px; display:flex; gap:12px; font:500 11px var(--sans); color:var(--muted); }
+  kbd { display:inline-block; min-width:20px; padding:2px 6px; margin-right:4px; border-radius:5px; border:1px solid var(--line-2); border-bottom-width:2px;
+    background:rgba(255,255,255,.04); color:var(--text); font:600 10px var(--mono); text-align:center; }
+  #pops { position:absolute; left:50%; top:28%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .pop { font:700 17px var(--sans); letter-spacing:.02em; white-space:nowrap; text-shadow:0 2px 8px rgba(0,0,0,.6); animation:pop 1s forwards; }
+  .pop { padding:5px 14px; border-radius:999px; background:rgba(13,16,23,.72); border:1px solid rgba(255,255,255,.08); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); font-size:15px; }
+  .pop.big { font-size:22px; padding:7px 18px; }
+  #combobar { height:3px; margin-top:6px; border-radius:2px; background:var(--line); overflow:hidden; opacity:0; transition:opacity .2s; }
+  #combobar i { display:block; height:100%; width:100%; background:var(--lime); }
+  .iconbtn { width:44px; height:44px; border-radius:12px; color:var(--text); font-size:18px; cursor:pointer; pointer-events:auto; }
+  .iconbtn:hover { border-color:var(--line-2); }
+  .setrow { display:flex; align-items:center; justify-content:space-between; gap:16px; font-size:14px; }
+  .setrow input[type=range] { width:200px; accent-color:var(--lime); pointer-events:auto; } .setrow input[type=checkbox] { width:18px; height:18px; accent-color:var(--lime); pointer-events:auto; }
+  .result > .big { justify-content:center; }
+  .seg { display:flex; padding:3px; border-radius:10px; background:rgba(0,0,0,.3); border:1px solid var(--line); }
+  .seg button { padding:7px 12px; border:0; border-radius:8px; background:none; color:var(--muted); cursor:pointer; font:600 12px var(--sans); pointer-events:auto; }
+  .seg button.on { background:var(--lime); color:#111; }
+  #start { background:radial-gradient(1200px 600px at 70% -10%, rgba(220,245,19,.08), transparent 60%), linear-gradient(90deg, rgba(10,12,18,.9), rgba(10,12,18,.62)); }
+  .topbar { flex-wrap:wrap; } .brand { flex-wrap:wrap; }
+  @media (max-width:600px) { .brand small { flex-basis:100%; padding-left:40px; margin-top:-6px; } #pname { width:100px; } .profile { padding-left:10px; } }
+  .walletrow { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:-8px; }
+  .big.small { padding:8px 14px; font-size:13px; border-radius:10px; }
+  .linkbtn { background:none; border:0; color:var(--muted); font:500 12px var(--sans); text-decoration:underline; cursor:pointer; pointer-events:auto; }
+  .linkbtn:hover { color:var(--text); }
+  .disclaimer { color:var(--muted); font:500 11px var(--mono); letter-spacing:.04em; }
+  .legal p { margin:0; font-size:13px; line-height:1.55; color:var(--muted); } .legal p b { color:var(--text); }
+  .brand .mark svg { display:block; }
+  #terms { z-index:9; } #arenaMaker { z-index:9; } /* above the landing page */
+  #pause, #settings { z-index:5; } #loading { z-index:10; background:var(--bg); }
+  .loader { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .loader .mark { width:54px; height:54px; border-radius:16px; background:var(--lime); color:#111; display:grid; place-items:center; font:700 18px var(--mono); }
+  .loader .bar { width:160px; height:3px; border-radius:2px; background:var(--line); overflow:hidden; }
+  .loader .bar i { display:block; width:40%; height:100%; background:var(--lime); animation:load 1s ease-in-out infinite; }
+  @keyframes load { 0%{transform:translateX(-100%)} 100%{transform:translateX(250%)} }
+  @keyframes pop { 0%{opacity:0; transform:translateY(8px) scale(.7)} 12%{opacity:1; transform:scale(1.12)} 25%{transform:scale(1)} 100%{opacity:0; transform:translateY(-46px)} }
+  #count { position:absolute; left:50%; top:40%; transform:translate(-50%,-50%); font:700 120px var(--sans); color:var(--lime); letter-spacing:-.04em; text-shadow:0 6px 30px rgba(0,0,0,.5); }
+  #count.beat { animation:beat .6s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes beat { 0%{transform:translate(-50%,-50%) scale(1.7); opacity:0} 30%{opacity:1} 100%{transform:translate(-50%,-50%) scale(1); opacity:.95} }
+  #chart { position:absolute; right:18px; bottom:18px; width:320px; height:180px; border-radius:var(--r); border:1px solid var(--line); }
+  @media (max-width:900px) { #chart { width:230px; height:130px; } #sbar { width:110px; } }
+  body.touch #chart { bottom:auto; right:auto; left:12px; top:138px; width:150px; height:84px; opacity:.85; }
+  @media (max-width:600px) { #ticker { font-size:10px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } }
+  @media (max-width:600px) {
+    #tl { left:10px; top:10px; min-width:0; padding:8px 12px; } #score { font-size:22px; } #tr { right:10px; top:10px; min-width:0; padding:8px 12px; } #time { font-size:18px; }
+    #bc { bottom:auto; top:112px; left:auto; right:10px; transform:none; padding:6px 10px; gap:8px; } /* under the timer: top-centre collided with the score on phones */ #speed { font-size:16px; min-width:28px; } #sbar { width:60px; } #hint { display:none; }
+  }
+
+  /* ---------- overlays (menu / results) ---------- */
+  .overlay { position:fixed; inset:0; overflow-y:auto; display:flex; justify-content:center; align-items:safe center; padding:28px 18px;
+    background:radial-gradient(1200px 600px at 70% -10%, rgba(220,245,19,.08), transparent 60%), rgba(10,12,18,.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+  .shell { width:min(1080px, 100%); display:flex; flex-direction:column; gap:22px; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .brand { display:flex; align-items:center; gap:10px; font:700 15px var(--sans); }
+  .brand .mark { width:30px; height:30px; border-radius:9px; background:var(--lime); color:#111; display:grid; place-items:center; font:700 13px var(--mono); }
+  .brand small { color:var(--muted); font-weight:500; }
+  .profile { display:flex; align-items:center; gap:10px; padding:6px 6px 6px 14px; }
+  .profile .lvlbadge { padding:4px 9px; border-radius:8px; background:rgba(220,245,19,.14); color:var(--lime); font:700 11px var(--mono); }
+  #pname { width:140px; padding:7px 10px; border-radius:9px; border:1px solid var(--line-2); background:rgba(0,0,0,.25); color:var(--text); font:600 13px var(--sans); pointer-events:auto; outline:none; }
+  #pname:focus { border-color:var(--lime); }
+  #xp { font:700 12px var(--mono); color:var(--muted); }
+  .hero { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+  h1 { margin:0; font:700 clamp(36px, 6vw, 68px)/.95 var(--sans); letter-spacing:-.035em; }
+  h1 span { color:var(--lime); }
+  .sub { margin-top:10px; color:var(--muted); font-size:15px; max-width:440px; line-height:1.45; }
+  .sub b { color:var(--green); font-weight:600; } .sub em { color:var(--red); font-style:normal; font-weight:600; }
+  .grid { display:grid; grid-template-columns:1.25fr 1fr; gap:18px; }
+  @media (max-width:860px) { .grid { grid-template-columns:1fr; } }
+  .card { padding:18px; display:flex; flex-direction:column; gap:12px; }
+  .card h2 { margin:0; font:600 13px var(--sans); color:var(--text); display:flex; justify-content:space-between; align-items:center; }
+  #levels { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; }
+  .lvl { position:relative; text-align:left; padding:14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.025); color:var(--text);
+    cursor:pointer; pointer-events:auto; display:flex; flex-direction:column; gap:3px; transition:border-color .15s, background .15s, transform .15s; }
+  .lvl:hover:not(.lock) { border-color:var(--line-2); background:rgba(255,255,255,.05); transform:translateY(-1px); }
+  .lvl b { font:700 20px var(--sans); letter-spacing:-.01em; } .lvl span { color:var(--muted); font-size:12px; }
+  .lvl small { font:500 10px var(--mono); color:var(--muted); margin-top:4px; }
+  .lvl small.tale { color:var(--text); opacity:.7; }
+  .stars { color:var(--lime); letter-spacing:1px; font-size:.85em; } .stars i { font-style:normal; color:var(--line); }
+  .goals { font:500 11px var(--mono); color:var(--muted); }
+  .tfrow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .tfrow button { flex:1; min-width:70px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.025); color:var(--text); text-align:left; cursor:pointer; display:flex; flex-direction:column; gap:2px; }
+  .tfrow button b { font:700 14px var(--mono); } .tfrow button small { font:500 9px var(--mono); color:var(--muted); }
+  .tfrow button.on { border-color:var(--lime); background:rgba(220,245,19,.06); box-shadow:inset 0 0 0 1px var(--lime); }
+  .tfrow button:disabled { opacity:.35; cursor:default; }
+  .lvl.on { border-color:var(--lime); background:rgba(220,245,19,.06); box-shadow:inset 0 0 0 1px var(--lime); }
+  .lvl.lock { opacity:.42; cursor:not-allowed; }
+  #pick { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  .viber { position:relative; padding:0 0 8px; border:2px solid transparent; border-radius:12px; cursor:pointer; color:#111; font:700 12px var(--sans); pointer-events:auto; overflow:hidden; transition:transform .15s; }
+  .viber:hover:not(.lock) { transform:translateY(-2px); }
+  .viber img { width:100%; display:block; }
+  .viber.on { border-color:var(--lime); box-shadow:0 0 0 3px rgba(220,245,19,.25); }
+  .viber.lock img { filter:grayscale(1) brightness(.55); } .viber.lock { cursor:not-allowed; }
+  .viber.lock::after { content:attr(data-need); position:absolute; left:0; right:0; top:40%; font:700 10px var(--mono); color:#fff; white-space:nowrap; }
+  .season { display:flex; align-items:center; gap:10px; } .season .num { font:700 12px var(--mono); }
+  .tier { padding:4px 10px; border-radius:8px; font:700 11px var(--mono); background:rgba(255,255,255,.06); }
+  .sbar { flex:1; height:6px; border-radius:3px; background:var(--line); overflow:hidden; } .sbar i { display:block; height:100%; width:0; background:var(--lime); }
+  .trails { display:flex; gap:8px; flex-wrap:wrap; }
+  .trail { display:flex; align-items:center; gap:6px; padding:5px 10px; border-radius:999px; border:1px solid var(--line); background:none; color:var(--text); font:600 11px var(--sans); cursor:pointer; pointer-events:auto; text-transform:capitalize; }
+  .trail i { width:10px; height:10px; border-radius:50%; } .trail.on { border-color:var(--lime); } .trail.lock { opacity:.35; cursor:not-allowed; }
+  #missions { display:flex; flex-direction:column; gap:8px; }
+  .ms { position:relative; padding:10px 12px 12px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid var(--line); display:flex; justify-content:space-between; gap:10px; font:500 13px var(--sans); overflow:hidden; }
+  .ms small { font:500 10px var(--mono); color:var(--muted); white-space:nowrap; align-self:center; }
+  .ms i { position:absolute; left:0; bottom:0; height:3px; background:var(--lime); border-radius:0 2px 2px 0; } .ms.done { color:var(--lime); border-color:rgba(220,245,19,.3); }
+  .cta { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .big { display:inline-flex; align-items:center; gap:10px; font:700 16px var(--sans); letter-spacing:.01em; color:#111; background:var(--lime); border:0; padding:15px 26px;
+    border-radius:12px; cursor:pointer; pointer-events:auto; transition:transform .12s, box-shadow .12s, background .12s; box-shadow:0 8px 24px rgba(220,245,19,.18); }
+  .big:hover { transform:translateY(-1px); box-shadow:0 12px 30px rgba(220,245,19,.28); }
+  .big:active { transform:translateY(1px); }
+  .big.alt { background:rgba(255,255,255,.06); color:var(--text); box-shadow:none; border:1px solid var(--line-2); }
+  .big.alt:hover { background:rgba(255,255,255,.1); }
+  .help { color:var(--muted); font-size:13px; }
+  .help summary { cursor:pointer; pointer-events:auto; list-style:none; } .help summary::before { content:'＋ '; color:var(--lime); }
+  .controls { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px 26px; margin-top:12px; text-align:left; }
+  .controls div { display:flex; gap:10px; align-items:baseline; } .controls b { flex:0 0 108px; color:var(--text); font:600 11px var(--mono); }
+  @media (max-width:600px) { .controls { grid-template-columns:1fr; } #pick { grid-template-columns:repeat(4, 1fr); gap:6px; } .viber { font-size:10px; } }
+
+  /* results */
+  /* Keep replay actions visible while longer run reports scroll. */
+  #end { justify-content:flex-start; align-items:center; padding:16px clamp(16px, 5vw, 72px); overflow:hidden; backdrop-filter:none; -webkit-backdrop-filter:none;
+    background:linear-gradient(90deg, rgba(10,12,18,.95) 0%, rgba(10,12,18,.8) 36%, rgba(10,12,18,0) 62%); }
+  #end .result { width:min(440px, 100%); max-height:calc(100dvh - 32px); padding:20px 22px; gap:12px; overflow:hidden; text-align:left; animation:slidein .5s cubic-bezier(.2,.8,.2,1); }
+  @keyframes slidein { from { opacity:0; transform:translateX(-24px); } }
+  #end .badge { align-self:flex-start; }
+  body.results #hud { opacity:0; transition:opacity .3s; } /* results: hide the run HUD behind the card */
+  #end #finalScore { font-size:clamp(40px, 9vh, 70px); }
+  #end #finalBest { font-size:12px; line-height:1.5; } #end .stars { font-size:1.5em; }
+  #end .stats div { padding:7px 8px; } #end .stats b { font-size:15px; }
+  #end #cardImg, #end #share { display:none; }  /* still built for Post on X / Save image, just not shown */
+  #end #board li { padding:5px 10px; } #end #board li:nth-child(n+4):not(.me) { display:none; }
+  #end .btns { justify-content:flex-start; gap:8px; } #end .btns .big { padding:10px 14px; font-size:13px; }
+  @media (max-aspect-ratio:1/1) {
+    #end { align-items:flex-end; justify-content:center; background:linear-gradient(0deg, rgba(10,12,18,.96) 0%, rgba(10,12,18,.82) 55%, rgba(10,12,18,0) 78%); }
+    #end .result { max-height:62dvh; padding:16px 18px; gap:10px; animation-name:slideup; }
+    #end .stats { grid-template-columns:repeat(4, 1fr); gap:6px; } #end .stats div { padding:6px; }
+    #end #boardTitle, #end #board, #end #saveCard, #end #copy { display:none; } /* rank is already shown under the score */
+    #end #finalScore { font-size:clamp(36px, 7vh, 56px); } @keyframes slideup { from { opacity:0; transform:translateY(24px); } }
+  }
+  @media (max-height:620px) { #end #boardTitle, #end #board, #end .goals { display:none; } #end .result { gap:9px; padding:16px 18px; } }
+  .result { width:min(560px, 100%); padding:24px; display:flex; flex-direction:column; gap:16px; text-align:center; }
+  .badge { align-self:center; padding:5px 12px; border-radius:999px; font:700 11px var(--mono); letter-spacing:.14em; background:rgba(220,245,19,.14); color:var(--lime); }
+  .badge.bad { background:rgba(239,83,80,.14); color:var(--red); }
+  #finalScore { font:700 clamp(48px, 10vw, 76px)/1 var(--mono); letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+  .stats { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .stats div { padding:10px 8px; border-radius:10px; background:rgba(255,255,255,.035); border:1px solid var(--line); }
+  .stats b { display:block; font:700 16px var(--mono); margin-top:3px; color:var(--text); }
+  @media (max-width:480px) { .stats { grid-template-columns:repeat(2, 1fr); } }
+  #finalBest { font:600 13px var(--sans); color:var(--muted); } .newbest { color:var(--lime); font-weight:700; }
+  .xpgain { font:600 13px var(--mono); color:var(--lime); } .xpgain b { color:var(--text); }
+  #board { list-style:none; padding:0; margin:0; text-align:left; font:500 13px var(--mono); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  #board li { display:grid; grid-template-columns:1fr auto 90px; gap:14px; padding:8px 12px; border-top:1px solid var(--line); }
+  .boardlist { list-style:none; padding:0; margin:0; font:500 13px var(--mono); } .boardlist li { display:grid; grid-template-columns:28px 1fr auto 90px; gap:10px; padding:7px 4px; border-top:1px solid var(--line); }
+  .boardlist li:first-child { border-top:0; } .boardlist li b { text-align:right; } .boardlist li.you { color:var(--lime); } .boardlist .empty { color:var(--muted); grid-template-columns:1fr; }
+  #board li:first-child { border-top:0; } #board li b { text-align:right; }
+  #board li.me { background:rgba(220,245,19,.1); color:var(--lime); }
+  #cardImg { width:100%; border-radius:12px; border:1px solid var(--line); display:block; }
+  #share { padding:12px 14px; border-radius:10px; border:1px dashed var(--line-2); font-size:13px; line-height:1.5; color:var(--muted); user-select:text; -webkit-user-select:text; text-align:left; }
+  .btns { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .btns .big { padding:12px 18px; font-size:14px; }
+
+
+  /* ---------- landing ---------- */
+  #landing { position:fixed; inset:0; z-index:8; overflow-y:auto; overflow-x:hidden; background:
+    radial-gradient(900px 520px at 78% 18%, rgba(220,245,19,.10), transparent 60%),
+    radial-gradient(700px 500px at 10% 90%, rgba(38,166,154,.10), transparent 60%), var(--bg); scroll-behavior:smooth; touch-action:pan-y; }
+  #landing a { color:inherit; text-decoration:none; }
+  .lnav { position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:24px; padding:16px clamp(18px, 4vw, 48px);
+    background:rgba(13,16,23,.7); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+  .lnav nav { display:flex; gap:22px; margin-left:auto; font:500 14px var(--sans); color:var(--muted); }
+  .lnav nav a:hover { color:var(--text); }
+  @media (max-width:760px) { .lnav nav { display:none; } .lnav .big { margin-left:auto; } }
+  .hero { display:grid; grid-template-columns:1.05fr 1fr; align-items:center; gap:24px; min-height:calc(100vh - 70px); padding:24px clamp(18px, 5vw, 64px) 48px; max-width:1240px; margin:0 auto; }
+  @media (max-width:900px) { .hero { grid-template-columns:1fr; min-height:0; padding-top:32px; } .hero-art { order:-1; height:min(62vw, 420px); } }
+  .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; border:1px solid var(--line-2); background:rgba(255,255,255,.03); font:500 12px var(--sans); color:var(--muted); }
+  .eyebrow i { width:7px; height:7px; border-radius:50%; background:var(--lime); box-shadow:0 0 0 4px rgba(220,245,19,.15); }
+  .hero-title { margin:22px 0 0; font:700 clamp(44px, 7vw, 92px)/.95 var(--sans); letter-spacing:-.045em; }
+  .hero-title span { color:var(--green); } .hero-title em { color:var(--red); font-style:normal; }
+  .hero-sub { margin:22px 0 0; max-width:500px; font-size:clamp(16px, 1.6vw, 19px); line-height:1.5; color:var(--muted); }
+  .hero-cta { display:flex; gap:12px; margin-top:30px; flex-wrap:wrap; }
+  .hero-cta a.big { display:inline-flex; align-items:center; }
+  .trust { display:flex; gap:20px; padding:0; margin:26px 0 0; list-style:none; font:500 13px var(--sans); color:var(--muted); flex-wrap:wrap; }
+  .trust li::before { content:'✓'; color:var(--lime); margin-right:7px; }
+  .hero-art { position:relative; height:min(70vh, 640px); }
+  #heroCanvas { width:100%; height:100%; display:block; cursor:pointer; }
+  @media (max-width:900px) { .hero .hero-art { height:min(80vw, 440px); } }
+  .hero-tag { position:absolute; left:50%; bottom:4%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:2px; pointer-events:none; }
+  .hero-tag b { font:700 15px var(--sans); } .hero-tag span { font:500 11px var(--mono); color:var(--muted); letter-spacing:.06em; }
+  .lsec { max-width:1120px; margin:0 auto; padding:72px clamp(18px, 5vw, 48px); }
+  .lhead { max-width:620px; margin-bottom:28px; }
+  .lhead h2, .final-cta h2 { margin:8px 0 0; font:700 clamp(28px, 4vw, 44px)/1.05 var(--sans); letter-spacing:-.03em; }
+  .lhead p { color:var(--muted); line-height:1.55; font-size:16px; }
+  .steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  @media (max-width:760px) { .steps { grid-template-columns:1fr; } }
+  .lcard { padding:24px; border-radius:var(--r); border:1px solid var(--line); background:rgba(255,255,255,.025); }
+  .lcard b { font:700 12px var(--mono); color:var(--lime); } .lcard h3 { margin:14px 0 6px; font:700 20px var(--sans); }
+  .lcard p { margin:0; color:var(--muted); line-height:1.5; font-size:14px; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .chips span { padding:10px 16px; border-radius:999px; border:1px solid var(--line-2); font:600 14px var(--sans); background:rgba(255,255,255,.02); }
+  .tiers { display:flex; gap:10px; flex-wrap:wrap; }
+  .tiers span { flex:1 1 140px; padding:18px; border-radius:12px; border:1px solid var(--line); font:700 15px var(--sans); color:var(--c);
+    background:linear-gradient(180deg, color-mix(in srgb, var(--c) 10%, transparent), transparent); }
+  /* section rhythm: alternating bands, eyebrow pills, card hover */
+  #landing .lsec { position:relative; }
+  #landing #moves, #landing #arenas, #landing #faq { max-width:none; background:linear-gradient(180deg, transparent, rgba(255,255,255,.022) 18%, rgba(255,255,255,.022) 82%, transparent); }
+  #landing #moves > *, #landing #arenas > *, #landing #faq > * { max-width:1024px; margin-left:auto; margin-right:auto; }
+  .lhead .lbl { display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:999px; border:1px solid var(--line-2); background:rgba(255,255,255,.03); }
+  .lhead .lbl::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--lime); }
+  .lcard { transition:transform .25s, border-color .25s, background .25s; }
+  .lcard:hover { transform:translateY(-3px); border-color:var(--line-2); background:rgba(255,255,255,.04); }
+  .steps.flow { counter-reset:step; position:relative; }
+  .steps.flow .lcard b { display:grid; place-items:center; width:38px; height:38px; border-radius:12px; font:800 14px var(--mono); color:#0b0d14; background:var(--lime); }
+  @media (min-width:761px) { .steps.flow::before { content:''; position:absolute; left:8%; right:8%; top:43px; height:1px; background:linear-gradient(90deg, transparent, var(--line-2), transparent); z-index:0; } .steps.flow .lcard { position:relative; z-index:1; } }
+  .chips span { transition:border-color .2s, background .2s; } .chips span:hover { border-color:var(--lime); background:rgba(220,245,19,.06); }
+  /* data tables */
+  .dtable-wrap { border:1px solid var(--line); border-radius:14px; overflow:hidden; background:rgba(255,255,255,.02); overflow-x:auto; }
+  .dtable { width:100%; border-collapse:collapse; font:500 14px var(--sans); }
+  .dtable th { text-align:left; padding:12px 16px; font:600 11px var(--mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); background:rgba(255,255,255,.03); border-bottom:1px solid var(--line); }
+  .dtable td { padding:13px 16px; border-bottom:1px solid var(--line); vertical-align:top; line-height:1.45; }
+  .dtable tbody tr:last-child td { border-bottom:0; } .dtable tbody tr { transition:background .15s; } .dtable tbody tr:hover { background:rgba(255,255,255,.03); }
+  .dtable .num { text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .dtable small { display:block; color:var(--muted); font-size:12px; margin-top:2px; }
+  .tiers-table td:first-child { font-weight:700; color:var(--c); } .tiers-table .dot { display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--c); margin-right:10px; box-shadow:0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+  .compare td:first-child { color:var(--muted); font:600 12px var(--mono); text-transform:uppercase; letter-spacing:.06em; white-space:nowrap; width:1%; }
+  .compare th.hl, .compare td:last-child { background:rgba(220,245,19,.035); } .compare th.hl { color:var(--lime); }
+  .dtable.kv td { padding:10px 0; } .dtable.kv td:first-child { color:var(--muted); width:46%; padding-right:12px; } .dtable.kv td:last-child { font-weight:600; text-align:right; } .dtable.kv tbody tr:hover { background:none; }
+  .tfoot { margin:10px 2px 0; font-size:12.5px; color:var(--muted); }
+  @media (max-width:600px) { .hide-sm { display:none; } .dtable th, .dtable td { padding:10px 12px; } }
+  .split { display:flex; height:10px; border-radius:999px; overflow:hidden; margin:16px 0 8px; gap:2px; } .split i { width:var(--w); }
+  .split i:nth-child(1) { background:var(--lime); } .split i:nth-child(2) { background:#7c95ff; } .split i:nth-child(3) { background:var(--green); opacity:.55; }
+  .split-legend { display:flex; gap:14px; flex-wrap:wrap; font:500 11.5px var(--mono); color:var(--muted); } .split-legend i { display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; }
+  .split-legend .a { background:var(--lime); } .split-legend .b { background:#7c95ff; } .split-legend .c { background:var(--green); opacity:.55; }
+  .timeline { list-style:none; padding:0; counter-reset:t; display:flex; flex-direction:column; gap:12px; }
+  .timeline li { position:relative; padding-left:38px; counter-increment:t; } .timeline li::before { content:counter(t); position:absolute; left:0; top:0; width:26px; height:26px; border-radius:8px; display:grid; place-items:center; font:700 12px var(--mono); color:#0b0d14; background:var(--lime); }
+  .timeline li:not(:last-child)::after { content:''; position:absolute; left:12.5px; top:30px; bottom:-10px; width:1px; background:var(--line-2); }
+  /* leaderboards everywhere: rank badges (gold / silver / bronze), aligned numbers */
+  #board { counter-reset:rank; } #board li { counter-increment:rank; grid-template-columns:30px 1fr auto 90px; align-items:center; }
+  #board li::before { content:counter(rank); }
+  #board li::before, .boardlist li > span:first-child { display:grid; place-items:center; width:24px; height:24px; border-radius:7px; font:700 11px var(--mono); background:rgba(255,255,255,.06); color:var(--muted); }
+  #board li:nth-child(1)::before, .boardlist li:nth-child(1) > span:first-child { background:#f5c542; color:#0b0d14; }
+  #board li:nth-child(2)::before, .boardlist li:nth-child(2) > span:first-child { background:#c9d1dc; color:#0b0d14; }
+  #board li:nth-child(3)::before, .boardlist li:nth-child(3) > span:first-child { background:#c08457; color:#0b0d14; }
+  .boardlist li { align-items:center; } #board li b, .boardlist li b { font-variant-numeric:tabular-nums; }
+  .boardlist li.empty > span:first-child, .boardlist li.empty::before { display:none; }
+  .tkgrid { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:14px; } @media (max-width:900px) { .tkgrid { grid-template-columns:1fr; } }
+  /* arenas */
+  .arena-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; } @media (max-width:760px) { .arena-grid { grid-template-columns:1fr; } }
+  .arena-cta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:22px; }
+  .arena-examples { display:flex; gap:8px; flex-wrap:wrap; }
+  .arena-examples button { display:flex; align-items:center; gap:8px; padding:7px 12px 7px 7px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text); font:600 13px var(--sans); cursor:pointer; }
+  .arena-examples button:hover { border-color:var(--c); } .arena-examples i { width:22px; height:22px; border-radius:50%; background:var(--c); display:grid; place-items:center; font:700 9px var(--mono); color:#0b0d14; font-style:normal; }
+  .maker { position:relative; width:min(1060px, 100%); display:grid; grid-template-columns:1fr 1.1fr; gap:28px; padding:28px; text-align:left; }
+  @media (max-width:860px) { .maker { grid-template-columns:1fr; padding:20px; gap:20px; } }
+  .maker.invite { grid-template-columns:1fr; width:min(620px, 100%); } .maker.invite .mk-form { display:none; }
+  .mk-close { position:absolute; top:12px; right:12px; width:36px; height:36px; z-index:1; }
+  .mk-form { display:flex; flex-direction:column; gap:14px; } .mk-form h2 { margin:4px 0 0; font:700 28px var(--sans); letter-spacing:-.02em; }
+  .mk-form label { display:flex; flex-direction:column; gap:6px; font:600 12px var(--mono); color:var(--muted); flex:1; min-width:0; } .mk-form small { font-weight:500; opacity:.7; }
+  .mk-form input:not([type=color]) { padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.035); color:var(--text); font:600 15px var(--sans); min-width:0; color-scheme:dark; }
+  .mk-form input[type=color] { width:100%; height:44px; padding:3px; border-radius:10px; border:1px solid var(--line); background:transparent; cursor:pointer; }
+  .mk-row { display:flex; gap:12px; } @media (max-width:520px) { .mk-row { flex-wrap:wrap; } }
+  .mk-chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .mk-chips button { padding:8px 11px; border-radius:9px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text); font:600 12px var(--sans); cursor:pointer; }
+  .mk-chips button.on { border-color:var(--lime); background:rgba(220,245,19,.08); box-shadow:inset 0 0 0 1px var(--lime); }
+  .mk-preview { display:flex; flex-direction:column; gap:14px; }
+  .mk-card { --b:#7c5cff; --a:#dcf513; border-radius:18px; padding:18px; border:1px solid color-mix(in srgb, var(--b) 45%, transparent);
+    background:radial-gradient(500px 220px at 85% -20%, color-mix(in srgb, var(--b) 38%, transparent), transparent 70%), linear-gradient(160deg, color-mix(in srgb, var(--b) 14%, #0c0e15), #0b0d13);
+    box-shadow:0 20px 60px -20px color-mix(in srgb, var(--b) 55%, transparent); display:flex; flex-direction:column; gap:14px; transition:border-color .3s, box-shadow .3s; }
+  .mk-head { display:flex; gap:12px; align-items:center; padding-right:36px; } .mk-head b { display:block; font:700 22px var(--sans); letter-spacing:-.02em; overflow-wrap:anywhere; } .mk-head span { font:500 12px var(--mono); color:var(--muted); }
+  .mk-mono { width:48px; height:48px; border-radius:14px; display:grid; place-items:center; font:800 16px var(--mono); color:#0b0d14; background:linear-gradient(135deg, var(--a), var(--b)); flex:none; }
+  #mkChart { width:100%; height:auto; aspect-ratio:640/300; border-radius:12px; background:rgba(0,0,0,.28); display:block; }
+  .mk-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; } .mk-stats div { padding:9px 10px; border-radius:10px; background:rgba(255,255,255,.04); } .mk-stats b { display:block; font:700 15px var(--mono); margin-top:3px; }
+  .mk-note { margin:0; padding:10px 12px; border-radius:10px; border-left:3px solid var(--a); background:rgba(255,255,255,.04); font-size:14px; line-height:1.45; overflow-wrap:anywhere; }
+  .mk-tag { font:600 10.5px var(--mono); letter-spacing:.04em; color:var(--muted); text-transform:uppercase; }
+  .mk-actions { display:flex; gap:8px; flex-wrap:wrap; } .mk-actions .big { padding:12px 16px; font-size:14px; }
+  .mk-fine { margin:0; font-size:12px; line-height:1.5; color:var(--muted); }
+  .maker [hidden] { display:none !important; }
+  .mk-form textarea { padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.035); color:var(--text); font:500 14px var(--sans); resize:vertical; }
+  .mk-verify { display:flex; flex-direction:column; gap:10px; padding:14px; border-radius:12px; border:1px dashed var(--line-2, var(--line)); }
+  .mk-verify > div { display:flex; justify-content:space-between; align-items:center; gap:10px; } .mk-verify b { font:700 15px var(--sans); color:var(--text); }
+  #mkChecks { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; font:500 12.5px var(--sans); color:var(--muted); }
+  #mkChecks li::before { content:'○'; margin-right:8px; } #mkChecks li.ok { color:var(--text); } #mkChecks li.ok::before { content:'✓'; color:var(--lime); } #mkChecks li.bad::before { content:'✕'; color:var(--red); }
+  .mk-badge { align-self:flex-start; padding:5px 11px; border-radius:999px; font:700 10.5px var(--mono); letter-spacing:.08em; text-transform:uppercase; background:rgba(255,255,255,.06); color:var(--muted); }
+  .mk-badge.ok { background:color-mix(in srgb, var(--a) 18%, transparent); color:var(--a); }
+  .mk-sec { display:flex; flex-direction:column; gap:6px; } .mk-sec p { margin:0; font-size:13.5px; line-height:1.5; white-space:pre-line; overflow-wrap:anywhere; }
+  .mk-sec a { color:var(--a); font:500 12px var(--mono); word-break:break-all; }
+  .mk-socials { display:flex; gap:8px; flex-wrap:wrap; } .mk-socials:empty { display:none; }
+  .mk-socials a { padding:7px 12px; border-radius:999px; border:1px solid color-mix(in srgb, var(--b) 50%, transparent); color:var(--text); font:600 12.5px var(--sans); text-decoration:none; }
+  #mkBoard:empty::after { content:'No runs yet — be the first.'; color:var(--muted); font-size:13px; }
+  .lvl.arena-card { --b:#7c5cff; --a:#dcf513; grid-column:1 / -1; border-color:color-mix(in srgb, var(--b) 60%, transparent); background:linear-gradient(120deg, color-mix(in srgb, var(--b) 20%, transparent), transparent 70%); }
+  .lvl.arena-card.on { border-color:var(--a); box-shadow:inset 0 0 0 1px var(--a); }
+  .lvl.arena-card .mk-mono { font-style:normal; width:34px; height:34px; border-radius:10px; font-size:11px; float:left; margin:0 10px 4px 0; }
+  #arenaBanner { --b:#7c5cff; --a:#dcf513; position:absolute; left:50%; top:14%; transform:translateX(-50%); display:flex; gap:12px; align-items:center; max-width:min(560px, 90vw);
+    padding:12px 18px 12px 12px; border-radius:16px; border:1px solid color-mix(in srgb, var(--b) 55%, transparent);
+    background:linear-gradient(120deg, color-mix(in srgb, var(--b) 30%, #0b0d14), rgba(11,13,20,.85)); backdrop-filter:blur(6px); animation:bannerin .5s cubic-bezier(.2,.8,.2,1); }
+  #arenaBanner[hidden] { display:none; } #arenaBanner .mk-mono { font-style:normal; width:40px; height:40px; border-radius:12px; font-size:13px; }
+  #arenaBanner b { display:block; font:700 18px var(--sans); } #arenaBanner span { font:500 12px var(--mono); color:var(--muted); overflow-wrap:anywhere; }
+  @keyframes bannerin { from { opacity:0; transform:translate(-50%, -12px); } }
+  .tkgrid [hidden] { display:none !important; } /* the buy link and contract stay hidden until the config is valid */
+  .tkbuy { display:flex; flex-direction:column; gap:14px; }
+  .tkstatus { align-self:flex-start; padding:5px 12px; border-radius:999px; font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; background:rgba(255,255,255,.06); color:var(--muted); }
+  .tkstatus.live { background:rgba(220,245,19,.14); color:var(--lime); }
+  .tkaddr { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:13px; } .tkaddr code { font:500 12px var(--mono); word-break:break-all; color:var(--text); }
+  .tkaddr a { color:var(--lime); font:600 12px var(--mono); }
+  #tkBuy { align-self:flex-start; text-decoration:none; }
+  .tksteps { margin:0; padding-left:18px; color:var(--muted); font-size:14px; line-height:1.6; } .tksteps b { color:var(--text); }
+  .tkwarn, .tknote { margin:0; font-size:12.5px; line-height:1.55; color:var(--muted); } .tkwarn { border-left:2px solid var(--red); padding-left:10px; }
+  .tklines { list-style:none; margin:10px 0 12px; padding:0; display:flex; flex-direction:column; gap:8px; font-size:13px; }
+  .tklines li { display:flex; justify-content:space-between; gap:12px; border-top:1px solid var(--line); padding-top:8px; } .tklines li:first-child { border-top:0; padding-top:0; }
+  .tklines span { color:var(--muted); } .tklines b { text-align:right; font-weight:600; }
+  .faq { display:flex; flex-direction:column; gap:10px; max-width:760px; }
+  .faq details { padding:16px 18px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.02); }
+  .faq summary { cursor:pointer; font:600 16px var(--sans); list-style:none; } .faq summary::after { content:'+'; float:right; color:var(--lime); }
+  .faq details[open] summary::after { content:'–'; } .faq p { margin:10px 0 0; color:var(--muted); line-height:1.55; font-size:14px; }
+  .final-cta { text-align:center; display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .lfoot { display:flex; flex-direction:column; align-items:center; gap:8px; padding:36px 18px 48px; border-top:1px solid var(--line); text-align:center; font:500 12px var(--sans); color:var(--muted); }
+  #landing .linkbtn, #landing button { pointer-events:auto; }
+  #landing.hidden { display:none; }
+  .brand { cursor:pointer; }
+
+  /* touch controls */
+  #touch { position:fixed; inset:0; pointer-events:none; }
+  #stick { position:absolute; left:26px; bottom:26px; width:130px; height:130px; border-radius:50%; border:1px solid var(--line-2); background:rgba(255,255,255,.03); }
+  #stick i { position:absolute; left:40px; top:40px; width:50px; height:50px; border-radius:50%; background:rgba(220,245,19,.35); }
+  .tbtn { position:absolute; pointer-events:auto; border-radius:50%; border:1px solid var(--line-2); background:var(--panel); color:var(--text); font:700 11px var(--sans); touch-action:none; backdrop-filter:blur(8px); }
+  .tbtn[data-act=jump] { right:22px; bottom:38px; width:92px; height:92px; background:var(--lime); color:#111; border:0; }
+  .tbtn[data-act=slide] { right:126px; bottom:22px; width:64px; height:64px; }
+  .tbtn[data-act=grab] { right:38px; bottom:146px; width:64px; height:64px; }
+  .tbtn[data-act=brake] { left:58px; bottom:172px; width:64px; height:64px; border-color:var(--red); }
+  .tbtn.held { transform:scale(.94); box-shadow:0 0 0 3px rgba(217,246,111,.35); }
+  /* Skyline edition — a quiet terminal frame around a vivid, readable course. */
+  :root { --bg:#0b1018; --panel:rgba(20,30,43,.88); --panel-solid:#141e2b; --text:#edf3f5; --muted:#a1afbf; --lime:#d9f66f; --red:#ff7878; --green:#63d6b0; --line:rgba(176,198,222,.12); --line-2:rgba(176,198,222,.25); --r:16px; color-scheme:dark; }
+  [hidden] { display:none !important; }
+  button, a, summary, input { -webkit-tap-highlight-color:transparent; }
+  button, a, summary { touch-action:manipulation; }
+  button, summary { min-height:44px; }
+  button:disabled { opacity:.45; cursor:not-allowed; transform:none !important; box-shadow:none; }
+  :where(button,a,input,summary,select):focus-visible { outline:2px solid var(--lime); outline-offset:4px; }
+  input, textarea { user-select:text; -webkit-user-select:text; }
+  p { line-height:1.65; }
+  .overlay { touch-action:pan-y; overscroll-behavior:contain; padding-top:max(24px,env(safe-area-inset-top)); padding-bottom:max(24px,env(safe-area-inset-bottom)); }
+  .panel { box-shadow:0 12px 36px #0003; border-color:var(--line); }
+  #landing { background:radial-gradient(ellipse at 80% 12%,#193b3638,transparent 44%),var(--bg); }
+  .lnav { background:#0b1018ed; border-bottom:1px solid var(--line); backdrop-filter:blur(16px); padding-block:18px; }
+  .lnav nav a { font-size:12px; }
+  .brand { letter-spacing:-.03em; }
+  .brand .mark { border-radius:7px; }
+  #landing .hero { max-width:1280px; margin:auto; padding:70px clamp(22px,6vw,88px) 48px; min-height:660px; align-items:center; }
+  .hero-title { font-size:clamp(48px,5.5vw,82px); line-height:1.03; letter-spacing:-.065em; }
+  .hero-title span { color:var(--lime); }
+  .hero-title em { color:var(--red); }
+  .hero-sub { max-width:48ch; font-size:16px; line-height:1.75; }
+  .eyebrow { font:500 10px var(--mono); letter-spacing:.12em; color:var(--muted); }
+  .hero-art { position:relative; border:0; border-radius:0; background:none; overflow:visible; }
+  .hero-tag { bottom:20px; left:50%; right:auto; transform:translateX(-50%); align-items:center; background:none; border:0; padding:0; }
+  .hero-tag b { color:var(--lime); }
+  .big { border-radius:9px; box-shadow:0 4px 16px #b6df2912; font-size:14px; letter-spacing:0; }
+  .big:hover { box-shadow:0 8px 24px #b6df2925; }
+  .trust { font:500 11px var(--mono); gap:18px; flex-wrap:wrap; }
+  .market-strip { max-width:1104px; margin:0 auto 32px; display:grid; grid-template-columns:repeat(4,1fr); border-block:1px solid var(--line); }
+  .market-strip div { padding:22px 24px; border-right:1px solid var(--line); }
+  .market-strip div:last-child { border:0; }
+  .market-strip b { display:block; font:700 22px var(--mono); color:var(--text); margin-bottom:6px; letter-spacing:-.04em; }
+  .market-strip span { color:var(--muted); font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+  .lsec { max-width:1180px; padding-block:64px; }
+  .lhead h2 { font-size:clamp(28px,4vw,44px); letter-spacing:-.045em; line-height:1.12; }
+  .lhead p { max-width:64ch; }
+  .lcard { border-radius:12px; background:#111a25; box-shadow:none; }
+  .lcard p { font-size:14px; }
+  .steps .lcard > b, .arena-feat > b { font:500 12px var(--mono); color:var(--lime); }
+  .chips span { border-radius:6px; background:#141e2b; padding:12px 16px; font-size:12px; }
+  .dtable th { font:500 10px var(--mono); text-transform:uppercase; letter-spacing:.08em; }
+  .faq { max-width:none; display:grid; grid-template-columns:1fr 1fr; align-items:start; }
+  .faq details { border-radius:10px; background:#111a25; }
+  .faq summary { display:flex; align-items:center; justify-content:space-between; gap:16px; font-size:14px; }
+  .lfoot { gap:12px; }
+  #start { background:linear-gradient(110deg,#0b1018f5,#0b1018d9); }
+  .shell { width:min(1160px,100%); gap:24px; }
+  #start .hero { display:flex; min-height:0; padding:6px 0; }
+  #start h1 { font-size:clamp(34px,5vw,58px); letter-spacing:-.055em; line-height:1.08; }
+  #start .sub { font-size:14px; max-width:48ch; }
+  .card { padding:22px; border-radius:14px; }
+  .card h2 { font-size:14px; gap:12px; line-height:1.5; }
+  .card h2 .lbl { text-align:right; font-size:9px; letter-spacing:.07em; }
+  .lvl { border-radius:9px; min-height:144px; padding:16px; overflow:hidden; }
+  .lvl::before { content:''; position:absolute; top:0; left:0; height:3px; width:100%; background:var(--line); }
+  .lvl.on::before { background:var(--lime); }
+  .lvl b { font:700 21px var(--mono); }
+  .lvl small { line-height:1.65; }
+  .lvl.lock { opacity:.6; }
+  .tfrow button { min-height:60px; }
+  .viber { border-radius:10px; }
+  .runner-note { font-size:12px; color:var(--muted); margin:0; min-height:20px; }
+  .ms { align-items:center; min-height:56px; line-height:1.5; }
+  .online-card { display:grid; grid-template-columns:1fr auto; align-items:center; gap:18px; }
+  .online-card h2 { margin:6px 0; font-size:22px; letter-spacing:-.035em; }
+  .online-card p { margin:0; font-size:12px; color:var(--muted); max-width:76ch; }
+  .online-card ol { grid-column:1/-1; }
+  .online-actions { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .online-actions label { display:flex; gap:8px; align-items:center; min-height:44px; font-size:13px; }
+  .online-actions input { accent-color:var(--lime); width:18px; height:18px; }
+  .boardlist li { min-height:42px; align-items:center; }
+  .boardlist li span { min-width:0; overflow-wrap:anywhere; }
+  #end .result { overflow:hidden; }
+  #end .resultDetails { display:flex; flex-direction:column; gap:12px; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; scrollbar-width:thin; }
+  #end .resultDetails > *, #end .result > .btns { flex-shrink:0; }
+  #end .result > .btns { border-top:1px solid var(--line); padding-top:12px; }
+  #end .stats { grid-template-columns:repeat(2,1fr); }
+  #end .btns .big { min-height:44px; }
+  #tl { border-left:3px solid var(--lime); }
+  #tr { border-top:2px solid var(--line-2); }
+  #pauseGame { position:absolute; right:18px; top:146px; pointer-events:auto; background:var(--panel); }
+  #tip { white-space:normal; max-width:min(560px,90vw); width:max-content; line-height:1.5; text-align:center; }
+  .loader p { max-width:34ch; text-align:center; color:var(--muted); }
+  .maker input, .maker textarea { min-height:44px; }
+  #start .brand { border:0; background:none; color:var(--text); padding:0; text-align:left; }
+  @media (max-width:900px) { #landing .hero { padding-top:32px; min-height:0; } .market-strip { margin-inline:22px; } .hero-art { min-height:320px; } }
+  @media (max-width:600px) {
+    .lnav { padding:12px 18px; } .lnav .brand { font-size:13px; }
+    #landing .hero { padding:24px 20px 32px; gap:24px; } .hero-title { font-size:46px; } .hero-sub { font-size:14px; }
+    .market-strip { grid-template-columns:1fr 1fr; } .market-strip div { padding:18px 12px; border-bottom:1px solid var(--line); } .market-strip div:nth-child(2) { border-right:0; }
+    .market-strip b { font-size:20px; } .lsec { padding:40px 20px; } .faq { grid-template-columns:1fr; }
+    .card { padding:16px; } .shell { gap:18px; } .online-card { grid-template-columns:1fr; } .online-card ol { grid-column:auto; }
+    .ms { flex-wrap:wrap; gap:4px; } .boardlist li { grid-template-columns:22px minmax(0,1fr) auto; font-size:11px; } #onlineBoard li span:nth-child(3) { display:none; }
+    #pauseGame { right:10px; top:172px; } .setrow { flex-wrap:wrap; } .setrow input[type=range] { width:min(200px,100%); }
+    #end .result { max-height:72dvh; } #touch { padding-bottom:env(safe-area-inset-bottom); }
+    .hero-tag span { font-size:10px; } .hero-art::after { font-size:8px; }
+  }
+  @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.001ms !important; transition-duration:.001ms !important; scroll-behavior:auto !important; } }
+  .sprint-route-buttons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:12px 0; }
+  .sprint-route-buttons button { text-align:left; min-height:64px; padding:10px; border-radius:9px; border:1px solid var(--line-2); background:#0b1018; color:var(--muted); cursor:pointer; font:600 11px var(--mono); }
+  .sprint-route-buttons button small { display:block; font-size:9px; margin-top:6px; font-weight:500; }
+  .sprint-route-buttons button[aria-pressed=true] { color:var(--lime); border-color:var(--lime); background:#d9f66f09; }
+  #sprintRoutes h2 { margin-top:10px; }
+  #runComparison { border-top:1px solid var(--line); padding-top:10px; }
+  #comparisonValues, #skillValues { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+  #comparisonValues span, #skillValues span { padding:6px 9px; border-radius:6px; background:#ffffff08; font:500 10px var(--mono); color:var(--muted); }
+  #skillTip { margin-top:8px; } #skillReview { border-top:1px solid var(--line); padding-top:12px; }
+  #comparisonValues .better { color:var(--lime); } #comparisonValues .worse { color:var(--red); }
+  #runInsight { padding:9px 12px; border-left:2px solid var(--gold); background:#ffd23f08; }
+  #tip { bottom:138px; }
+  #actionFeedback { position:absolute; left:50%; bottom:138px; transform:translateX(-50%); text-align:center; padding:10px 20px; border-radius:10px; border:1px solid var(--line-2); background:#0b1018df; min-width:190px; max-width:85vw; box-shadow:0 8px 32px #0004; }
+  #actionFeedback b { display:block; font:700 19px var(--sans); letter-spacing:.02em; }
+  #actionFeedback span { display:block; margin-top:4px; color:var(--text); font:500 10px var(--mono); letter-spacing:.04em; }
+  body.touch #actionFeedback { bottom:282px; }
+  #routeCue { position:absolute; left:50%; top:22px; transform:translateX(-50%); padding:12px 20px; text-align:center; max-width:40vw; border-bottom:2px solid var(--lime); }
+  #routeCue b { display:block; margin-top:5px; font:700 12px var(--mono); letter-spacing:.02em; }
+  #routeCue .lbl { font-size:9px; color:var(--muted); }
+  #routeCue.danger { border-color:var(--red); background:#321c25ed; } #routeCue.danger b { color:var(--red); }
+  #airCharge { position:absolute; left:50%; bottom:85px; transform:translateX(-50%); display:flex; align-items:center; gap:8px; padding:9px 14px; font:500 9px var(--mono); letter-spacing:.08em; color:var(--muted); }
+  #airCharge i { width:8px; height:8px; background:var(--lime); border-radius:2px; box-shadow:0 0 10px #d9f66f30; }
+  #airCharge i.used { background:#5a6675; box-shadow:none; }
+  #dashDot { margin-left:8px; }
+  #runModeTag { color:var(--text); margin-right:8px; }
+  #autoRunToggle[aria-pressed=true] { color:var(--lime); border-color:#d9f66f55; }
+  body.touch #airCharge { bottom:230px; }
+  @media (max-width:600px) {
+    #routeCue { top:116px; max-width:none; width:calc(100% - 24px); padding:8px 12px; }
+    #routeCue .lbl { display:none; } #routeCue b { margin:0; font-size:10px; }
+    body.touch #chart { top:158px; width:126px; height:70px; }
+    #pauseGame { top:158px; }
+    #tip { bottom:282px; font-size:12px; }
+    #airCharge { bottom:230px; white-space:nowrap; }
+  }
+  /* Landing: an open skyline, editorial sections and route-specific scenery. */
+  #landing { background:radial-gradient(ellipse 650px 550px at 82% 280px,#244c3c30,transparent 75%),#0b1018; }
+  #landing .hero { max-width:1440px; min-height:740px; padding:64px clamp(24px,6vw,92px) 72px; grid-template-columns:1.1fr 1fr; gap:0; }
+  .hero-title { font-size:clamp(64px,6.5vw,100px); line-height:.99; letter-spacing:-.07em; max-width:none; }
+  .hero-title > span, .hero-title > em { display:block; }
+  .hero-sub { max-width:40ch; font-size:17px; line-height:1.7; margin-top:28px; }
+  .hero .eyebrow { border:0; background:none; padding:0; font-size:9px; letter-spacing:.13em; }
+  .hero .hero-art { height:620px; min-width:0; }
+  .hero-cta .big { padding:17px 22px; } .hero-cta .alt { background:transparent; border-color:var(--line-2); }
+  .hero-cta span { margin-left:14px; } .hero-tag { bottom:4%; }
+  .market-strip { max-width:1256px; margin:0 auto; padding-inline:12px; }
+  .market-strip div { padding:28px 24px; border-right:0; } .market-strip b { font-family:var(--sans); font-size:25px; }
+  #landing .lsec { padding:100px clamp(24px,5vw,64px); max-width:1280px; scroll-margin-top:82px; }
+  #landing .lhead { margin-bottom:32px; } #landing .lhead h2 { font-size:clamp(34px,4vw,58px); line-height:1.06; letter-spacing:-.055em; margin-top:20px; }
+  #landing .lhead .lbl { border:0; background:none; padding:0; font-size:9px; letter-spacing:.16em; }
+  #landing .lhead .lbl::before { display:none; } #landing .lhead p { margin-top:24px; font-size:16px; line-height:1.75; }
+  #landing .lhead em { color:var(--lime); font-style:normal; }
+  #landing #how { display:grid; grid-template-columns:1fr 1fr; gap:80px; }
+  #how .steps { display:flex; flex-direction:column; gap:0; } #how .steps::before { display:none; }
+  #how .lcard { position:relative; border:0; border-top:1px solid var(--line-2); border-radius:0; padding:24px 0 24px 48px; background:none; }
+  #how .lcard:hover { transform:none; background:none; } #how .steps .lcard b { position:absolute; top:29px; left:0; width:auto; height:auto; color:var(--lime); background:none; font-size:10px; }
+  #how .lcard h3 { margin:0 0 10px; font-size:24px; letter-spacing:-.04em; } #how .lcard p { font-size:14px; line-height:1.65; }
+  #landing #moves, #landing #arenas, #landing #faq { max-width:none; background:#101923; }
+  #landing #moves > *, #landing #arenas > *, #landing #faq > * { max-width:1152px; }
+  .movement-layout { display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; }
+  .move-list { margin-top:32px; } .move-list > div { display:grid; grid-template-columns:104px 1fr; gap:12px; padding:16px 0; border-top:1px solid var(--line); font-size:13px; line-height:1.6; }
+  .move-list b { color:var(--lime); font:500 11px var(--mono); } .move-list span { color:var(--muted); }
+  .movement-art { background:radial-gradient(ellipse,#63d6b00d,transparent 70%); min-width:0; }
+  .movement-art svg { width:100%; display:block; } .diagram-label { color:var(--muted); font:500 9px var(--mono); letter-spacing:.16em; }
+  .diagram-footer { display:flex; justify-content:space-between; gap:12px; border-top:1px solid var(--line-2); padding-top:18px; font:500 10px var(--mono); letter-spacing:.1em; color:var(--muted); } .diagram-footer b { color:var(--lime); }
+  .section-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:40px; }
+  .section-heading .lhead { margin:0 !important; } .section-heading > p { color:var(--muted); font-size:14px; line-height:1.7; }
+  .route-showcase { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
+  .route-story { padding:26px; background:linear-gradient(150deg,color-mix(in srgb,var(--route) 9%,#0e151e),#101823); border-top:2px solid var(--route); min-width:0; }
+  .route-index { color:var(--route); font:500 9px var(--mono); letter-spacing:.15em; }
+  .route-chart { height:150px; display:flex; gap:13px; align-items:center; justify-content:center; overflow:hidden; }
+  .route-chart i { display:block; width:17px; height:35px; position:relative; background:color-mix(in srgb,var(--route) 30%,transparent); border:1px solid var(--route); }
+  .route-chart i::before { content:''; position:absolute; left:7px; top:-12px; bottom:-12px; width:1px; background:var(--route); opacity:.6; }
+  .route-chart i:nth-child(2) { height:45px; transform:translateY(10px); } .route-chart i:nth-child(3) { height:25px; transform:translateY(24px); border-color:var(--red); background:#ff78781a; }
+  .route-chart i:nth-child(4) { height:55px; transform:translateY(0); } .route-chart i:nth-child(5) { height:42px; transform:translateY(-25px); } .route-chart i:nth-child(6) { height:28px; transform:translateY(-15px); } .route-chart i:nth-child(7) { height:35px; transform:translateY(-40px); }
+  .route-story:nth-child(2) .route-chart { transform:skewY(-8deg); } .route-story:nth-child(3) .route-chart { transform:scaleX(-1); }
+  .route-story h3 { font-size:30px; letter-spacing:-.05em; margin:14px 0 12px; } .route-story p { font-size:14px; color:var(--muted); line-height:1.7; min-height:72px; margin:0 0 24px; }
+  .route-link { width:100%; display:flex; justify-content:space-between; align-items:center; color:var(--route); background:none; border:0; border-top:1px solid var(--line-2); padding:16px 0 0; cursor:pointer; font:700 13px var(--sans); }
+  .route-link span { transition:transform .18s; } .route-link:hover span { transform:translate(3px,-3px); } .route-link:active { opacity:.65; }
+  #season .dtable-wrap { border:0; border-radius:0; background:none; } #season .dtable td { padding:20px 16px; } #season .dtable th { background:none; }
+  .arena-grid { gap:32px; } #arenas .arena-feat { background:none; border:0; border-top:1px solid var(--line-2); border-radius:0; padding:24px 0; } #arenas .arena-feat:hover { transform:none; } #arenas .arena-feat h3 { font-size:24px; letter-spacing:-.04em; }
+  .launch-details { border-block:1px solid var(--line-2); margin:28px 0; } .launch-details > summary { cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:20px; list-style:none; padding:22px 0; font-size:16px; font-weight:700; }
+  .launch-details > summary span { font:500 10px var(--mono); color:var(--muted); } .launch-details .tkgrid { margin-bottom:24px; }
+  #landing .faq { gap:0; } .faq details { border:0; border-radius:0; border-top:1px solid var(--line-2); padding:24px 0; background:none; }
+  #landing .final-cta { padding-block:110px; } .final-cta h2 { font-size:clamp(48px,6vw,84px); line-height:1; letter-spacing:-.065em; margin:0; } .final-cta .lbl { color:var(--lime); letter-spacing:.16em; }
+  @media (max-width:1000px) { #landing .hero { grid-template-columns:1fr 1fr; min-height:640px; padding-inline:28px; } .hero-title { font-size:64px; } .hero .hero-art { height:500px; order:0; } #landing #how { gap:40px; } .route-story { padding:20px; } .route-story h3 { font-size:25px; } }
+  @media (max-width:760px) {
+    #landing .hero { grid-template-columns:1fr; padding:48px 24px 32px; } .hero-title { font-size:clamp(58px,12vw,82px); max-width:10ch; }
+    .hero .hero-art { height:360px; min-height:0; margin-top:8px; } .hero-sub { font-size:16px; } .hero .eyebrow { font-size:8px; letter-spacing:.08em; }
+    .hero-tag { bottom:0; } .market-strip { margin-inline:24px; padding:0; } .market-strip div { padding:24px 8px; } .market-strip b { font-size:23px; } .market-strip span { font-size:8px; line-height:1.7; display:block; }
+    #landing .lsec { padding:64px 24px; } #landing #how, .movement-layout { grid-template-columns:1fr; gap:28px; } #landing .lhead h2 { font-size:40px; }
+    .movement-art { padding-top:12px; } .section-heading { display:block; } .section-heading > p { margin-top:22px; }
+    .route-showcase { grid-template-columns:1fr; gap:24px; } .route-chart { height:140px; } .route-story { padding:24px; } .route-story p { min-height:0; } .route-story h3 { font-size:32px; }
+    .arena-grid { gap:8px; } .launch-details > summary { align-items:flex-start; flex-direction:column; gap:8px; } #landing .final-cta { padding-block:80px; }
+  }
+  #combo.idle { background:none; color:var(--muted); font-size:9px; padding:3px 0; letter-spacing:.02em; }
+  #scoreMath { border-top:1px solid var(--line); } #scoreMath summary { padding:12px 0; cursor:pointer; font-size:12px; color:var(--muted); }
+  #scoreParts { display:grid; grid-template-columns:1fr auto; gap:10px 16px; font-size:12px; margin:0 0 12px; }
+  #scoreParts dt { color:var(--muted); } #scoreParts dd { margin:0; font:500 11px var(--mono); text-align:right; font-variant-numeric:tabular-nums; }
+  #scoreParts dt:nth-last-child(2), #scoreParts dd:last-child { padding-top:10px; border-top:1px solid var(--line-2); color:var(--lime); }
+  @media (max-width:760px) {
+    #landing .hero { padding-top:32px; } .hero-cta { gap:10px; margin-top:24px; } .hero-cta .big { padding:14px 16px; font-size:12px; }
+    .hero-cta span { margin-left:8px; } .trust { gap:12px; font-size:9px; margin-top:20px; }
+  }
+</style>
+</head>
+<body>
+<div id="vignette"></div>
+<div id="flash"></div>
+<div id="flowfx"></div>
+<div id="hud">
+  <div id="tl" class="panel"><div id="ticker">CP01 · SIM</div><div id="score">0</div><div id="combo"></div><div id="combobar"><i></i></div></div>
+  <div id="tr" class="panel"><div class="lbl">Time</div><div id="time">0:00.00</div><div id="split" class="num"></div><div class="lbl" id="prog">0%</div><div id="progbar"><i></i></div></div>
+  <div id="bc" class="panel"><div id="speed">0</div><div><div class="lbl" style="margin-bottom:5px">km/h</div><div id="sbar"><i></i></div></div></div>
+  <div id="hint"><span id="fps" class="num hidden"></span><span><kbd>R</kbd>restart</span><span><kbd>Esc</kbd>pause</span><span><kbd>G</kbd>ghost</span><span><kbd>M</kbd>music</span></div>
+  <div id="pops"></div>
+  <div id="tip" class="panel hidden"></div>
+  <div id="actionFeedback" hidden><b id="actionName"></b><span id="actionDetail"></span></div>
+  <button class="iconbtn" id="pauseGame" aria-label="Pause game">Ⅱ</button>
+  <div id="routeCue" class="panel" hidden><span class="lbl">NEXT MOVE</span><b id="nextMove">Find your line</b></div>
+  <div id="airCharge" class="panel" hidden><span id="runModeTag">AUTO-RUN</span><i data-jump></i><i data-jump></i><span>JUMPS</span><i id="dashDot"></i><span id="dashLabel">SLIDE</span></div>
+  <div id="count"></div>
+  <div id="arenaBanner" hidden><i class="mk-mono"></i><div><b></b><span></span></div></div>
+  <div id="deathcard" class="hidden"></div>
+  <canvas id="chart"></canvas>
+</div>
+<div id="touch" class="hidden">
+  <div id="stick"><i></i></div>
+  <button class="tbtn" data-act="jump">JUMP</button>
+  <button class="tbtn" data-act="slide">SLIDE</button>
+  <button class="tbtn" data-act="grab">GRAB</button>
+  <button class="tbtn" data-act="brake" aria-label="Brake while held">BRAKE</button>
+</div>
+
+<div id="loading" class="overlay"><div class="loader"><div class="mark"><svg viewBox="0 0 140 112" width="24" height="24" aria-hidden="true"><path fill="#0b1018" d="M14 20H35L46 63L61 36H78L90 63L104 13H126L103 99H81L69 73L56 99H34Z M20 6H28V20H20Z M110 0H118V13H110Z"/></svg></div><div class="bar"><i></i></div><div class="lbl">Loading 3D engine…</div></div></div>
+<div id="pause" class="overlay hidden"><div class="result panel" style="width:min(360px,100%)">
+  <div class="badge">PAUSED</div>
+  <button class="big" id="pResume">Resume</button>
+  <button class="big alt" id="pRestart">Restart run</button>
+  <button class="big alt small" id="pCheckpoint" disabled>Retry checkpoint · +1 death / +3s</button>
+  <button class="big alt" id="pGhost">Best-run ghost: on</button>
+  <button class="big alt" id="pSettings">Settings</button>
+  <button class="big alt" id="pQuit">Quit to menu</button>
+</div></div>
+<div id="settings" class="overlay hidden"><div class="result panel" style="width:min(440px,100%); text-align:left">
+  <div class="badge">SETTINGS</div>
+  <div class="setrow"><span>Graphics</span><div class="seg"><button data-q="auto">Auto</button><button data-q="low">Low</button><button data-q="medium">Medium</button><button data-q="high">High</button></div></div>
+  <div class="setrow"><span>Music</span><input type="range" id="setMusic" min="0" max="1" step=".05"></div>
+  <div class="setrow"><span>Sound effects</span><input type="range" id="setSfx" min="0" max="1" step=".05"></div>
+  <div class="setrow"><span>Mouse sensitivity</span><input type="range" id="setSens" min=".3" max="2.5" step=".1"></div>
+  <label class="setrow" for="setAutoRun"><span>Auto-run · steer and jump (V)</span><input type="checkbox" id="setAutoRun"></label>
+  <label class="setrow" for="setMouseLook"><span>Free look · advanced, off by default</span><input type="checkbox" id="setMouseLook"></label>
+  <div class="setrow"><span>Show best-run ghost (G)</span><input type="checkbox" id="setGhost"></div>
+  <div class="setrow"><span>Show FPS</span><input type="checkbox" id="setFps"></div>
+  <div class="setrow"><span>Colour-blind friendly (blue / orange)</span><input type="checkbox" id="setCb"></div>
+  <div class="setrow"><span>Reduce motion (no shake or zoom)</span><input type="checkbox" id="setCalm"></div>
+  <div class="setrow" id="hapticsRow"><span>Haptics (phones)</span><input type="checkbox" id="setHaptics"></div>
+  <div class="lbl" style="line-height:1.6">Auto starts on High and steps down if the game runs below ~42 FPS. Low turns off shadows, anti-aliasing, bloom and the lens effect.</div>
+  <button class="big" id="setClose">Done</button>
+</div></div>
+<div id="landing">
+  <header class="lnav">
+    <div class="brand"><div class="mark"><svg viewBox="0 0 140 112" width="24" height="24" aria-hidden="true"><path fill="#0b1018" d="M14 20H35L46 63L61 36H78L90 63L104 13H126L103 99H81L69 73L56 99H34Z M20 6H28V20H20Z M110 0H118V13H110Z"/></svg></div>Wick Runner</div>
+    <nav aria-label="Main navigation"><a href="#moves">The movement</a><a href="#routes">The routes</a><a href="#season">Progression</a><a href="#arenas">Arenas</a><a href="#faq">FAQ</a></nav>
+    <button class="big small" data-quick>Quick run</button>
+  </header>
+
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow"><i></i>FREE BROWSER PARKOUR · SKYLINE DISTRICT</div>
+      <h1 class="hero-title">Run the chart.<span>Green holds.</span><em>Red breaks.</em></h1>
+      <p class="hero-sub">A skyline made of candlesticks. A line only you can run. Leap the gaps, ride the rails and turn a good run into a great one.</p>
+      <div class="hero-cta">
+        <button class="big" data-quick>Start a long run <span aria-hidden="true">→</span></button>
+        <button class="big alt" data-play>Explore the game <span aria-hidden="true">↗</span></button>
+      </div>
+      <ul class="trust"><li>Free to play</li><li>No wallet needed</li><li>Desktop &amp; mobile</li></ul>
+    </div>
+    <div class="hero-art">
+      <canvas id="heroCanvas" role="button" tabindex="0" aria-label="Meet the next runner character"></canvas>
+      <div class="hero-tag"><b id="heroName">Scout</b><span>tap to meet the crew</span></div>
+    </div>
+  </section>
+
+  <div class="market-strip" aria-label="Game at a glance"><div><b>Long runs.</b><span>900 candles. Three routes.</span></div><div><b>Your line.</b><span>Flips, grinds, swings &amp; wall-runs</span></div><div><b>One more try.</b><span>Race the ghost of your best run</span></div><div><b>All skill.</b><span>No paid scoring advantage</span></div></div>
+
+  <section id="how" class="lsec">
+    <div class="lhead"><span class="lbl">01 / THE IDEA</span><h2>The chart is the course.<br>Your timing is the edge.</h2><p>Easy to enter. Plenty to get good at. Movement stays fluid; the score comes from what you choose to do.</p></div>
+    <div class="steps flow">
+      <div class="lcard"><b>01</b><h3>Read the rooftops.</h3><p>Green holds. Red breaks. Look one candle ahead and keep a second jump in reserve.</p></div>
+      <div class="lcard"><b>02</b><h3>Make your move.</h3><p>Auto-run carries the pace. You choose the jump, the slide and the moment to launch from a swing.</p></div>
+      <div class="lcard"><b>03</b><h3>Own the line.</h3><p>Deliberate moves build your combo. Land safely to bank it, then come back for a cleaner run.</p></div>
+    </div>
+  </section>
+
+  <section id="moves" class="lsec">
+    <div class="movement-layout">
+      <div class="lhead"><span class="lbl">02 / THE FEEL</span><h2>Less hesitation.<br>More <em>flow.</em></h2><p>A double jump to save the gap. A rail to carry your momentum. One perfectly timed release. Find the moves that connect.</p><div class="move-list"><div><b>01 / Lift</b><span>Hold for height. Tap again to flip.</span></div><div><b>02 / Redirect</b><span>Steer in the air. Keep your dash for a correction.</span></div><div><b>03 / Commit</b><span>Link intentional moves. Bank the landing.</span></div></div></div>
+      <div class="movement-art" role="img" aria-label="A jump arc connecting green rooftops above a red candle">
+        <span class="diagram-label">FIND THE CONNECTION</span>
+        <svg viewBox="0 0 560 360" aria-hidden="true"><defs><linearGradient id="jumpGlow" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#63d6b0"/><stop offset="1" stop-color="#d9f66f"/></linearGradient></defs><path d="M20 308H540M20 228H540M20 148H540" stroke="#a1afbf" opacity=".1"/><path d="M80 285V175M200 320V235M335 260V130M475 240V80" stroke="#63d6b0" stroke-width="2"/><path d="M60 210h40v55H60zM315 160h40v80h-40zM455 120h40v80h-40z" fill="#224b48" stroke="#63d6b0"/><path d="M180 258h40v45h-40z" fill="#512b36" stroke="#ff7878"/><path d="M80 205Q190 5 335 155Q410 10 475 115" fill="none" stroke="url(#jumpGlow)" stroke-width="3" stroke-dasharray="7 7"/><circle cx="211" cy="105" r="13" fill="#d9f66f"/><path d="m205 105 5 5 9-10" fill="none" stroke="#0b1018" stroke-width="2"/><circle cx="335" cy="155" r="6" fill="#63d6b0"/><circle cx="475" cy="115" r="6" fill="#d9f66f"/></svg>
+        <div class="diagram-footer"><span>YOUR MOMENTUM</span><b>YOUR DECISION.</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="routes" class="lsec">
+    <div class="section-heading"><div class="lhead"><span class="lbl">03 / THREE WAYS THROUGH</span><h2>A skyline to survive.<br>A long line to master.</h2></div><p>Longer routes. Real hazards.<br>Pick a Sprint and make it yours.</p></div>
+    <div class="route-showcase">
+      <article class="route-story" style="--route:#80e9cb"><span class="route-index">01 / BALANCE</span><div class="route-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>Flowline</h3><p>Find the rhythm. Connect rails, springs and a big drop into one fluid run.</p><button class="route-link" data-quick data-quick-route="0">Run Flowline <span aria-hidden="true">↗</span></button></article>
+      <article class="route-story" style="--route:#c9b5ff"><span class="route-index">02 / ELEVATION</span><div class="route-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>Airline</h3><p>Take the high line. Read the springs, climb the skyline and stick the descent.</p><button class="route-link" data-quick data-quick-route="1">Run Airline <span aria-hidden="true">↗</span></button></article>
+      <article class="route-story" style="--route:#ffca8b"><span class="route-index">03 / CONNECTIONS</span><div class="route-chart" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>After Hours</h3><p>Keep the line alive. Mix wall-runs, rail grinds and swings under an amber sky.</p><button class="route-link" data-quick data-quick-route="2">Run After Hours <span aria-hidden="true">↗</span></button></article>
+    </div>
+  </section>
+
+  <section id="season" class="lsec">
+    <div class="lhead"><span class="lbl">04 / LEAVE A TRAIL</span><h2>Get better.<br>Look the part.</h2><p>Stars for mastery. Characters for experience. A new cosmetic trail as you climb the weekly season. Every runner shares the same physics.</p></div>
+    <div class="dtable-wrap"><table class="dtable tiers-table">
+      <thead><tr><th>Tier</th><th class="num">Season Points</th><th>Unlocks</th><th class="hide-sm">Notes</th></tr></thead>
+      <tbody>
+        <tr style="--c:#c08457"><td><i class="dot"></i>Bronze</td><td class="num">0</td><td>Default trail</td><td class="hide-sm">Everyone starts here each week</td></tr>
+        <tr style="--c:#c9d1dc"><td><i class="dot"></i>Silver</td><td class="num">1,000</td><td>Silver trail</td><td class="hide-sm">About one good day of play</td></tr>
+        <tr style="--c:#f5c542"><td><i class="dot"></i>Gold</td><td class="num">3,000</td><td>Gold trail</td><td class="hide-sm">Consistent daily runs</td></tr>
+        <tr style="--c:#7fd8cf"><td><i class="dot"></i>Platinum</td><td class="num">6,000</td><td>Mint trail</td><td class="hide-sm">Most days, with missions</td></tr>
+        <tr style="--c:#b48cff"><td><i class="dot"></i>Diamond</td><td class="num">8,000</td><td>Violet trail</td><td class="hide-sm">The top of the week</td></tr>
+      </tbody></table></div>
+    <p class="tfoot">Daily cap 1,500 SP for everyone. Token holdings never boost Season Points. Seasons reset every Monday 00:00 UTC. Trails are cosmetic only.</p>
+  </section>
+
+  <section id="arenas" class="lsec">
+    <div class="lhead"><span class="lbl">05 / BRING YOUR CREW</span><h2>A skyline with<br>your name on it.</h2><p>Your colors, your chart, your community. Create an arena, share a link and give your crew a line to beat.</p></div>
+    <div class="arena-grid">
+      <div class="lcard arena-feat"><b>01</b><h3>Brand it</h3><p>Your name, ticker and colors on the chart wall, the sky and the HUD. Pick the story your chart tells: a launch, a pump and dump, a squeeze, a bear market.</p></div>
+      <div class="lcard arena-feat"><b>02</b><h3>Share one link</h3><p>The invite link opens your arena straight away — no install, no wallet needed to play. Each campaign has separate local bests and ghosts, with a shared board on the score service.</p></div>
+      <div class="lcard arena-feat"><b>03</b><h3>Run your campaign</h3><p>Set an end date and a note for your players. Publish clear rules before a campaign. Any prizes need organizer review of verified runs. Creating a verified arena needs 1,000,000 $WRUN held by a wallet that created or owns your token — free beta arenas until then.</p></div>
+    </div>
+    <details class="launch-details"><summary>Main game or community arena? <span>Compare the formats +</span></summary><div class="dtable-wrap"><table class="dtable compare">
+      <thead><tr><th></th><th>Main game</th><th class="hl">Project arena</th></tr></thead>
+      <tbody>
+        <tr><td>Charts</td><td>Sprint, 4 story charts, the Daily and the Weekly Cup</td><td>Your token's branded chart and story</td></tr>
+        <tr><td>Leaderboard</td><td>Per chart and timeframe</td><td>Your own, on your arena page</td></tr>
+        <tr><td>Progress</td><td>XP, Season Points, stars, ghosts</td><td>Stars and ghosts on your chart</td></tr>
+        <tr><td>Incentives</td><td>Cosmetic progression today · any incentive needs a published budget</td><td>Your campaign, your prizes, your rules</td></tr>
+        <tr><td>For players</td><td>Free</td><td>Free</td></tr>
+        <tr><td>To create</td><td>—</td><td>A wallet that created or owns your token, holding 1,000,000 $WRUN</td></tr>
+      </tbody></table></div></details>
+    <div class="arena-cta"><button class="big" data-arena-new>Create your arena <span aria-hidden="true">→</span></button><span class="lbl">or try an example:</span><div id="arenaExamples" class="arena-examples"></div></div>
+  </section>
+
+  <section id="token" class="lsec">
+    <div class="lhead"><span class="lbl">06 / OPTIONAL, ALWAYS</span><h2>The game comes first.</h2><p id="tkLead">$WRUN is the Wick Runner token on Robinhood Chain testnet. It is not live yet. When it launches, the only official buy link and contract address will appear here and in our pinned posts.</p></div>
+    <details class="launch-details"><summary>$WRUN token &amp; launch information <span>Read the details +</span></summary>
+    <div class="tkgrid">
+      <div class="lcard tkbuy">
+        <div class="tkstatus" id="tkStatus">Not launched</div>
+        <div class="tkaddr" id="tkAddrRow" hidden><span class="lbl">Contract</span><code id="tkAddr"></code><button class="linkbtn" id="tkCopy">Copy</button><a id="tkExplorer" target="_blank" rel="noopener noreferrer">Explorer ↗</a></div>
+        <a class="big" id="tkBuy" target="_blank" rel="noopener noreferrer" hidden>Buy $WRUN on vibe/vibe ↗</a>
+        <ol class="tksteps timeline">
+          <li>Get a wallet on Robinhood Chain Testnet and testnet ETH from the official faucet.</li>
+          <li>Open our token page on vibe/vibe <b>only from the button above</b>, and check the contract address matches.</li>
+          <li>Read the launch page terms and supported trading route. Final platform settings will be published here before launch.</li>
+        </ol>
+        <p class="tkwarn">Testnet tokens have no monetary value. Not financial advice. We never ask for a seed phrase. Optional ranked sign-in and arena publishing use clearly described messages, never token approvals.</p>
+      </div>
+      <div class="lcard">
+        <h3>Launch plan · not finalized</h3>
+        <table class="dtable kv"><tbody>
+          <tr><td>Supply</td><td>To be confirmed <small>publish final launch settings</small></td></tr>
+          <tr><td>Graduation</td><td>Platform rules at launch</td></tr>
+          <tr><td>Graduation airdrop</td><td>Not committed <small>budget and terms first</small></td></tr>
+          <tr><td>Creator buy</td><td>Disclose before launch <small>public creator wallet</small></td></tr>
+          <tr><td>Project tax</td><td>Not finalized <small>fund development transparently</small></td></tr>
+        </tbody></table>
+        <p class="tknote">Build a game people return to before finalizing a token. Publish the contract, allocations, fees and treasury policy together. No return or distribution is promised.</p>
+      </div>
+      <div class="lcard">
+        <h3>The token in the game</h3>
+        <table class="dtable kv"><tbody>
+          <tr><td>Hold 10k / 100k / 1M</td><td>+10 / 20 / 30% <small>cosmetic XP only</small></td></tr>
+          <tr><td>Leaderboards</td><td>Pure skill <small>never boosted</small></td></tr>
+          <tr><td>Season incentives</td><td>Not active <small>no promised allocation</small></td></tr>
+          <tr><td>Verified arena</td><td>1,000,000 $WRUN <small>held by the token publisher</small></td></tr>
+          <tr><td>Holder League</td><td>Weekly board <small>later</small></td></tr>
+          <tr><td>Game points</td><td>No monetary value</td></tr>
+        </tbody></table>
+        <p class="tknote">Any community incentive has a fixed, announced budget and is about <b>distribution eligibility</b>: never guaranteed, reviewed against published terms, with runs verified on a server first.</p>
+      </div>
+    </div>
+    </details>
+  </section>
+
+  <section id="faq" class="lsec">
+    <div class="lhead"><span class="lbl">FAQ</span><h2>Good to know</h2></div>
+    <div class="faq">
+      <details><summary>Is it free?</summary><p>Yes. Open the page and play. No sign-up, no wallet, no payment.</p></details>
+      <details><summary>Does auto-run earn the score for me?</summary><p>Auto-run keeps you moving. Distance gives only 2 points per metre, and pickups give 10 flat points. Intentional jumps, slides, dashes and grabs build your skill chain; unprompted automatic crossings never create a combo or Flow. Your result shows the full score breakdown.</p></details>
+      <details><summary>Are the charts real market data?</summary><p>No. Every chart is generated for gameplay and says nothing about the price of any token.</p></details>
+      <details><summary>Do points or tiers have value?</summary><p>No. XP, Season Points, tiers and trails are in-game progress only. They are not tokens and have no monetary value.</p></details>
+      <details><summary>Do I need a wallet?</summary><p>No wallet is needed to practice. Connecting reads your public token balance. Ranked sign-in and arena verification each ask for a free message signature; the game never requests a token approval or transfer.</p></details>
+      <details><summary>Is this an official vibe/vibe game?</summary><p>No. Wick Runner is an independent project launching on vibe/vibe. It is not operated, endorsed or audited by vibe/vibe.</p></details>
+    </div>
+  </section>
+
+  <section class="lsec final-cta">
+    <span class="lbl">THE NEXT RUN IS YOURS.</span><h2>One clean line.<br>Then one more.</h2>
+    <button class="big" data-quick>Run the skyline <span aria-hidden="true">→</span></button>
+  </section>
+
+  <footer class="lfoot">
+    <span>Wick Runner · launching on vibe/vibe · Robinhood Chain Testnet</span>
+    <span>Simulated charts · in-game points have no monetary value · testnet tokens have no value · not financial advice · we never DM first</span>
+    <button class="linkbtn" data-terms>Terms, incentives &amp; safety</button>
+  </footer>
+</div>
+<div id="arenaMaker" class="overlay hidden">
+  <div class="maker panel">
+    <button class="iconbtn panel mk-close" id="mkClose" aria-label="Close">✕</button>
+    <div class="mk-form" id="mkForm">
+      <div><span class="lbl">Arena builder · beta</span><h2>Create your arena</h2></div>
+      <label>Community name<input id="mkName" maxlength="24" placeholder="Moon Guild"></label>
+      <div class="mk-row"><label>Ticker<input id="mkTicker" maxlength="8" placeholder="MOON"></label>
+        <label>Brand color<input type="color" id="mkC1" value="#7c5cff"></label><label>Accent<input type="color" id="mkC2" value="#dcf513"></label></div>
+      <label>Market story<div class="mk-chips" id="mkStory"></div></label>
+      <div class="mk-row"><label>Timeframe<div class="mk-chips" id="mkTf"></div></label><label>Length<div class="mk-chips" id="mkLen"></div></label></div>
+      <div class="mk-row"><label>Campaign ends <small>(optional)</small><input type="date" id="mkEnd"></label><label>Organizer on X <small>(optional)</small><input id="mkX" maxlength="16" placeholder="@handle"></label></div>
+      <label>Short description <small>(shown on your arena page)</small><input id="mkNote" maxlength="160" placeholder="The official parkour league of the Moon Guild"></label>
+      <label>Campaign rules <small>(prizes, dates, who is eligible — you run them)</small><textarea id="mkRules" maxlength="300" rows="3" placeholder="Top 10 on Sunday 20:00 UTC get the Moon role. One wallet per player."></textarea></label>
+      <label>Your token contract <small>(the token this arena is for)</small><input id="mkToken" maxlength="42" placeholder="0x…"></label>
+      <div class="mk-row"><label>Telegram<input id="mkTg" maxlength="32" placeholder="moonguild"></label><label>Discord invite<input id="mkDc" maxlength="32" placeholder="abc123"></label><label>Website<input id="mkWeb" maxlength="100" placeholder="https://…"></label></div>
+      <div class="mk-verify">
+        <div><b>Verified arena</b><span class="lbl">needed for a verified badge</span></div>
+        <ul id="mkChecks"></ul>
+        <button class="big alt" id="mkSign" type="button">Connect wallet &amp; verify</button>
+        <p class="mk-fine">You sign one free message (no transaction, no approval). Anyone opening your link re-checks it on-chain.</p>
+      </div>
+    </div>
+    <div class="mk-preview">
+      <div class="mk-card" id="mkCard">
+        <div class="mk-head"><div class="mk-mono" id="mkMono">MO</div><div><b id="mkPName">Moon Guild</b><span id="mkPSub"></span></div></div>
+        <canvas id="mkChart" width="640" height="300"></canvas>
+        <div class="mk-stats"><div><span class="lbl">Candles</span><b id="mkPLen">110</b></div><div><span class="lbl">Ends</span><b id="mkPEnd">open</b></div><div><span class="lbl">Your best</span><b id="mkPBoard">—</b></div></div>
+        <div class="mk-badge" id="mkBadge">Unverified community arena</div>
+        <p class="mk-note" id="mkPNote" hidden></p>
+        <div class="mk-sec" id="mkRulesBox" hidden><span class="lbl">Campaign rules</span><p id="mkPRules"></p></div>
+        <div class="mk-socials" id="mkSocials"></div>
+        <div class="mk-sec" id="mkTokenBox" hidden><span class="lbl">Project token</span><a id="mkPToken" target="_blank" rel="noopener noreferrer"></a></div>
+        <div class="mk-sec"><span class="lbl">Leaderboard · this device</span><ol id="mkBoard" class="boardlist"></ol></div>
+        <div class="mk-tag">Prizes and rules are run by the organizer, not by Wick Runner</div>
+      </div>
+      <div class="mk-actions">
+        <button class="big" id="mkPlay">Play this arena →</button>
+        <button class="big alt" id="mkCopy">Copy invite link</button>
+        <button class="big alt" id="mkPost">Post on X</button>
+        <button class="big alt" id="mkEdit" hidden>Make your own</button>
+      </div>
+      <p class="mk-fine">The invite link carries the arena setup. Practice bests and ghosts stay on this device; ranked play sends input replays to the score service for verification.</p>
+    </div>
+  </div>
+</div>
+<div id="terms" class="overlay hidden"><div class="result panel legal" style="width:min(620px,100%); text-align:left">
+  <div class="badge">TERMS · INCENTIVES · SAFETY</div>
+  <p><b>Independent project.</b> Wick Runner is an independent game launching on vibe/vibe (Robinhood Chain Testnet). It is not operated, endorsed or audited by vibe/vibe.</p>
+  <p><b>Simulated charts.</b> Every chart in the game is generated for gameplay. It is not market data and says nothing about the price of any token.</p>
+  <p><b>In-game progress only.</b> XP, SP, tiers, trails and leaderboard ranks are game progress. They are not tokens and have no monetary value.</p>
+  <p><b>Testnet.</b> Testnet ETH and testnet tokens have no monetary value. Never send mainnet funds to testnet. A testnet token address will not be the mainnet address.</p>
+  <p><b>Incentives.</b> Any future distribution eligibility follows the published programme terms and review. Nothing is guaranteed: a rank, tier, mission or role is not a promise of any allocation.</p>
+  <p><b>Fair play.</b> Modified or automated runs, multiple accounts, exploiting bugs or any other manipulation may remove eligibility.</p>
+  <p><b>Safety.</b> We will never DM you first and never ask for a seed phrase or private key. Only use official links. Playing is free. Optional balance checks are read-only. Ranked sign-in and arena publishing ask you to sign a message explaining its purpose. Neither transfers funds or approves tokens.</p>
+  <p><b>Privacy.</b> Practice progress is stored in this browser. Connecting sends your public address to the Robinhood Chain RPC for balance checks; arena verification also uses its explorer. Ranked play stores your public wallet address, chosen display name, run inputs and verified scores on the score service, using an essential sign-in cookie. Display names and shortened wallet addresses appear on the shared board. Your browser also contacts font and code providers when loaded from static hosting. No email or seed phrase is requested.</p>
+  <p class="lbl" style="line-height:1.7">Not financial, legal or investment advice. Any token can lose value.</p>
+  <button class="big" id="termsClose">Close</button>
+</div></div>
+<div id="start" class="overlay">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand"><div class="mark"><svg viewBox="0 0 140 112" width="24" height="24" aria-hidden="true"><path fill="#0b1018" d="M14 20H35L46 63L61 36H78L90 63L104 13H126L103 99H81L69 73L56 99H34Z M20 6H28V20H20Z M110 0H118V13H110Z"/></svg></div>Wick Runner <small>· launching on vibe/vibe · testnet</small></div>
+      <div style="display:flex; gap:10px; align-items:center;"><div class="profile panel"><span class="lvlbadge" id="lvlbadge">LV 1</span><input id="pname" maxlength="16" aria-label="Player name"><span id="xp">0 XP</span></div><button class="iconbtn panel" id="gear" aria-label="Settings">⚙</button></div>
+      </div>
+      <div class="walletrow"><button class="big alt small" id="walletBtn">Connect wallet</button><span class="lbl" id="walletInfo">Balance connection · read-only · no transaction</span><span style="flex:1"></span><button class="linkbtn" id="termsBtn">Terms, incentives &amp; safety</button>
+    </div>
+    <div class="hero">
+      <div>
+        <h1>Chart <span>Parkour</span> 3D</h1>
+        <div class="sub">Run the candles. <b>Green holds</b>, <em>red breaks</em>. Flip, vault, roll and grind your way across every rise and drop.</div>
+      </div>
+      <div class="cta">
+        <button class="big alt small" id="autoRunToggle" aria-pressed="true">Auto-run ON</button>
+        <button class="big" id="go">Start run <span aria-hidden="true">→</span></button>
+        <span class="lbl"><kbd>Enter</kbd></span>
+      </div>
+    </div>
+    <div class="grid">
+      <div style="display:flex; flex-direction:column; gap:18px;"><div class="card panel"><h2>Choose a chart <span class="lbl">clear one to unlock the next</span></h2><div id="levels"></div><div id="sprintRoutes" hidden><h2>Choose your line <span class="lbl">separate bests and ghosts</span></h2><div id="sprintRouteButtons" class="sprint-route-buttons" role="group" aria-label="Sprint route"></div><p id="sprintRouteNote" class="runner-note"></p></div><h2 style="margin-top:16px">Timeframe <span class="lbl">bigger candles · bigger moves · bigger score</span></h2><div class="tfrow" id="tfRow"></div></div>
+        <div class="card panel"><h2><span id="mbTitle">Leaderboard</span> <span class="lbl">this browser</span></h2><ol id="menuBoard" class="boardlist"></ol></div></div>
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div class="card panel"><h2>Your runner <span class="lbl">same physics · different attitude</span></h2><div id="pick"></div><p class="runner-note" id="runnerNote"></p></div>
+        <div class="card panel"><h2><span id="seasonTitle">Season</span> <span class="lbl" id="seasonEnds"></span></h2>
+          <div class="season"><span class="tier" id="tierBadge">Bronze</span><div class="sbar"><i id="seasonBar"></i></div><span class="num" id="seasonSp">0 SP</span></div>
+          <div class="lbl" id="seasonNext"></div><div class="lbl" id="seasonDaily"></div>
+          <div class="trails" id="trails"></div></div>
+        <div class="card panel"><h2>Daily missions <span class="lbl">reset at 00:00 UTC</span></h2><div id="missions"></div></div>
+      </div>
+    </div>
+    <div class="card panel online-card"><div><span class="lbl">Shared leaderboard</span><h2 id="onlineTitle">Practice makes a cleaner line.</h2><p id="onlineStatus" role="status">Checking ranked play…</p></div><div class="online-actions"><button class="big alt small" id="rankedLogin">Sign in for ranked</button><label><input type="checkbox" id="rankedMode"> Ranked run</label><button class="linkbtn hidden" id="rankedLogout">Sign out</button></div><ol id="onlineBoard" class="boardlist"></ol></div>
+    <div class="disclaimer">Simulated charts · local progress stays in this browser · shared scores require a verified replay · no promised payouts</div>
+    <details class="help"><summary>Controls &amp; moves</summary>
+      <div class="controls">
+        <div><b>A / D · ← / →</b><span>Steer. With auto-run on, hold S or ↓ to brake.</span></div>
+        <div><b>V · auto-run</b><span>Toggle auto-run. Turn it off for manual W / S movement. Mouse look is optional in Settings.</span></div>
+        <div><b>SPACE</b><span>Jump · again mid-air to flip (direction picks front / back / side) · hold for height</span></div>
+        <div><b>SHIFT / C</b><span>Slide on the ground · spin-dash in the air</span></div>
+        <div><b>LEDGES</b><span>Vault low ones at speed · hang on high ones, hold forward to climb</span></div>
+        <div><b>DUMPS · PUMPS</b><span>Run into big drops to roll · springs launch you up big pumps</span></div>
+        <div><b>E (hold)</b><span>Grab a pole, release to launch</span></div>
+        <div><b>WALLS · RAILS</b><span>Jump at walls to wall-run · land on rails to grind</span></div>
+        <div><b>G · R · ESC · M</b><span>Best-run ghost on/off · restart · pause · music</span></div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div id="end" class="overlay hidden">
+  <div class="result panel">
+    <div class="resultDetails" tabindex="0" role="region" aria-label="Run result and records">
+    <div class="badge" id="endTitle">CHART CLEARED</div>
+    <div>
+      <div class="lbl">Score</div>
+      <div id="finalScore">0</div>
+      <div id="finalBest" style="margin-top:6px"></div>
+    </div>
+    <div class="stats">
+      <div><span class="lbl">Time</span><b id="stTime">0:00</b></div>
+      <div><span class="lbl">Candles</span><b id="stCandles">0</b></div>
+      <div><span class="lbl">Style</span><b id="stStyle">0</b></div>
+      <div><span class="lbl">Bonus</span><b id="stBonus">0</b></div>
+    </div>
+    <div class="xpgain" id="xpGain"></div>
+    <p class="runner-note" id="nextGoal"></p>
+    <details id="scoreMath"><summary>How your score adds up</summary><dl id="scoreParts"></dl><p class="runner-note">Auto-run sets the pace. Intentional moves build style; pickups give 10 flat points and never build your combo.</p></details>
+    <div id="runComparison" hidden><div class="lbl">VS YOUR LOCAL BEST-SCORE RUN</div><div id="comparisonValues"></div></div>
+    <p class="runner-note" id="runInsight" hidden></p>
+    <div id="skillReview"><div class="lbl">MOVEMENT REVIEW · THIS RUN, INCLUDING RETRIES</div><div id="skillValues"></div><p class="runner-note" id="skillTip"></p></div>
+    <div>
+      <div class="lbl" id="boardTitle" style="text-align:left; margin-bottom:8px">Leaderboard</div>
+      <ol id="board"></ol>
+    </div>
+    <img id="cardImg" alt="Your run as a share card">
+    <div id="share"></div>
+    <div class="btns">
+      <button class="big alt" id="shareX">Post on X</button>
+      <button class="big alt" id="saveCard">Save image</button>
+      <button class="big alt" id="copy">Copy text</button>
+    </div>
+    </div>
+    <div class="btns">
+      <button class="big" id="again">Run again</button>
+      <button class="big alt hidden" id="nextRoute">Next Sprint route →</button>
+      <button class="big alt" id="next">Next chart →</button>
+      <button class="big alt" id="menu">Menu</button>
+      <button class="big alt hidden" id="submitRanked">Submit ranked run</button>
+      <button class="big alt hidden" id="recordOnchain">Record on-chain (testnet)</button>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script>
+  window.engineFailed = () => {
+    const box = document.querySelector('#loading .loader'); if (!box || window.__cp) return;
+    box.replaceChildren();
+    const title = document.createElement('h2'); title.textContent = 'The skyline could not load.';
+    const detail = document.createElement('p'); detail.textContent = 'Check your connection and enable WebGL in your browser, then try again.';
+    const retry = document.createElement('button'); retry.className = 'big'; retry.textContent = 'Try again'; retry.onclick = () => location.reload();
+    box.append(title, detail, retry);
+  };
+  window.addEventListener('error', () => { if (!window.__cp) window.engineFailed(); });
+  setTimeout(window.engineFailed, 25000);
+</script>
+<script type="module" src="./game.mjs" onerror="window.engineFailed()"></script>
+</body>
+</html>

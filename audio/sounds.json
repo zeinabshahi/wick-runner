@@ -1,0 +1,115 @@
+{
+ "glass": [
+  "glass1.mp3",
+  "glass2.mp3"
+ ],
+ "crack": [
+  "crack.mp3",
+  "es_crack2.mp3"
+ ],
+ "thunder": [
+  "thunder1.mp3",
+  "thunder2.mp3"
+ ],
+ "ghost": [
+  "ghost.mp3"
+ ],
+ "music_main": [
+  "music_main.mp3"
+ ],
+ "music_haunt": [
+  "music_haunt.mp3"
+ ],
+ "bank": [
+  "es_bank.mp3"
+ ],
+ "boost": [
+  "es_boost.mp3"
+ ],
+ "checkpoint": [
+  "es_checkpoint.mp3"
+ ],
+ "coin": [
+  "es_coin1.mp3",
+  "es_coin2.mp3"
+ ],
+ "death": [
+  "es_death1.mp3",
+  "es_death2.mp3"
+ ],
+ "djump": [
+  "es_djump1.mp3",
+  "es_djump2.mp3"
+ ],
+ "flip": [
+  "es_flip1.mp3",
+  "es_flip2.mp3"
+ ],
+ "gameover": [
+  "es_gameover.mp3"
+ ],
+ "go": [
+  "es_go.mp3"
+ ],
+ "jump": [
+  "es_jump1.mp3",
+  "es_jump2.mp3",
+  "es_jump3.mp3"
+ ],
+ "land": [
+  "es_land1.mp3",
+  "es_land2.mp3",
+  "es_land3.mp3"
+ ],
+ "pause": [
+  "es_pause.mp3"
+ ],
+ "perfect": [
+  "es_perfect.mp3"
+ ],
+ "resume": [
+  "es_resume.mp3"
+ ],
+ "spring": [
+  "es_spring1.mp3",
+  "es_spring2.mp3"
+ ],
+ "thud": [
+  "es_thud.mp3"
+ ],
+ "tick": [
+  "es_tick.mp3"
+ ],
+ "win": [
+  "es_win.mp3"
+ ],
+ "fw_launch": [
+  "es_fw_launch1.mp3",
+  "es_fw_launch2.mp3"
+ ],
+ "fw_boom": [
+  "es_fw_boom1.mp3",
+  "es_fw_boom2.mp3"
+ ],
+ "fw_crackle": [
+  "es_fw_crackle1.mp3",
+  "es_fw_crackle2.mp3"
+ ],
+ "bat": [
+  "bat1.mp3",
+  "bat2.mp3"
+ ],
+ "howl": [
+  "howl.mp3"
+ ],
+ "amb_haunt": [
+  "amb_haunt.mp3"
+ ],
+ "grind": [
+  "grind.mp3"
+ ],
+ "zap": [
+  "es_zap1.mp3",
+  "es_zap2.mp3"
+ ]
+}

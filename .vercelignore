@@ -1,0 +1,15 @@
+.claude
+ECONOMY.md
+STRATEGY.fa.md
+README.md
+node_modules
+data
+artifacts
+tests
+.env*
+server.mjs
+package.json
+package-lock.json
+Dockerfile
+.dockerignore
+video/
