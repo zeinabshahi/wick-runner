@@ -861,7 +861,7 @@ const VIBERS = [
   { name: 'Relay', bio: 'RELAY / the signal runner. Quiet focus. Clean connections.', accent: 0xffc65e, head: 0xd5e2e8, body: 0x192c45, panel: 0xd5e2e8, arm: 0x253e59, cuff: 0xd5e2e8, cuffH: .14, feet: 0x162438, sole: 0xffc65e, top: 'comms', face: 'signal', eye: 0x9eeaff, bg: '#d9e4ee' },
   { name: 'Ember', bio: 'EMBER / the rooftop artist. Leave a bright line behind.', accent: 0xff859c, head: 0xa8513e, body: 0x202a36, arm: 0xa8513e, cuff: 0xd5e2e8, cuffBand: 0x15161a, feet: 0x162438, sole: 0xff859c, top: 'mohawk', hair: 0x573a3b, face: 'big', eye: 0xdedacd, item: 'canister', bg: '#d9e4ee' },
   // Haunt the Chain crew
-  { name: 'Bones', haunt: true, bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xece6d2, body: 0xe2dbc4, arm: 0xe2dbc4, cuff: 0xc9c0a4, feet: 0x2b3038, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
+  { name: 'Bones', haunt: true, bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xece6d2, body: 0x17191f, arm: 0x17191f, cuff: 0xe2dbc4, feet: 0x17191f, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
   { name: 'Jack', haunt: true, bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xf2801f, body: 0x2f6b3a, arm: 0x2f6b3a, cuff: 0xf2801f, feet: 0x1f2a22, sole: 0xffa62e, top: 'stem', stem: 0x6b5a2a, leaf: 0x86c442, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
 ];
 const INK = 0x15161a, OUTLINE = new THREE.LineBasicMaterial({ color: INK });
@@ -885,9 +885,16 @@ function buildRunner(v, addToScene = true) {
   // body (narrower than the head, like the art) and the big head on top of it
   blk(hips, BW, BH, BD, v.body, 0, BH / 2, 0);
   const head = new THREE.Group(); head.position.y = BH; hips.add(head);
-  blk(head, HW, HH, HD, v.head, 0, HH / 2, 0);
-  if (v.face !== 'mask') blk(head, HW + .004, .066, HD + .004, tint(v.head, 1.15), 0, HH - .028, 0);       // lighter top rim; sits a hair proud so it never z-fights the head
+  if (v.face === 'jack') { // a round pumpkin from five lobes: tallest and deepest in the middle, the ink seams between them are the ribs
+    [[-.4, .2, .74, .72], [-.2, .2, .9, .84], [0, .2, .96, HD], [.2, .2, .9, .84], [.4, .2, .74, .72]].forEach(([x, w, h, d], k) => blk(head, w, h, d, k % 2 ? tint(v.head, .92) : v.head, x, .04 + h / 2 + (.96 - h) / 2 * .4, 0));
+  } else if (v.face === 'skull') { // cranium, cheek band and a narrower jaw: reads as a skull, not a box
+    blk(head, HW, .66, HD, v.head, 0, .63, 0);
+    blk(head, HW - .08, .14, HD - .06, tint(v.head, .93), 0, .23, .02);
+    blk(head, .74, .22, .7, tint(v.head, .9), 0, .09, .05);
+  } else blk(head, HW, HH, HD, v.head, 0, HH / 2, 0);
+  if (v.face !== 'mask' && !v.haunt) blk(head, HW + .004, .066, HD + .004, tint(v.head, 1.15), 0, HH - .028, 0);       // lighter top rim; sits a hair proud so it never z-fights the head
   const eye = (...a) => { const m = blk(head, ...a, false); eyes.push(m); return m; };
+  let capeRef = null;
   const glows = [], glow = m => { const c = m.material.color.getHex(); m.material = new THREE.MeshBasicMaterial({ color: c }); m.userData.c = c; glows.push(m); return m; }; // unlit (reads in the dark), own material so it can flicker
   const pupils = [], pupil = (...a) => { const m = eye(...a); m.userData.base = m.position.clone(); pupils.push(m); return m; }; // eyes that look where the head looks
 
@@ -929,46 +936,38 @@ function buildRunner(v, addToScene = true) {
     blk(hips, .24, .13, .04, v.accent, 0, BH - .14, BD / 2 + .02);                    // shirt print
   }
 
-  if (v.face === 'skull') { // Bones: a carved bone skull and ribcage, toxic-green glow in the sockets
-    const shade = tint(v.head, .84), deep = tint(v.head, .62);
-    blk(head, .9, .075, .06, shade, 0, .71, FZ + .02, false);                                          // brow ridge
+  if (v.face === 'skull') { // Bones: a skull that glows from within, in a black bomber with toxic-green trim
+    const shade = tint(v.head, .84), deep = tint(v.head, .62), JZ = .4; // JZ: jaw front
+    blk(head, .92, .07, .06, shade, 0, .74, FZ + .015, false);                                          // brow ridge
     for (const sd of [-1, 1]) {
-      blk(head, .34, .31, .07, INK, sd * .23, .5, FZ + .03);                                            // socket
-      blk(head, .2, .19, .02, 0x1f4a14, sd * .23, .5, FZ + .07, false);                                 // dim glow ring
-      pupil(.1, .1, .03, v.eye, sd * .23, .5, FZ + .085); glow(eyes[eyes.length - 1]);
-      blk(head, .2, .07, .04, shade, sd * .31, .31, FZ + .015, false);                                  // cheekbone
+      blk(head, .32, .28, .06, INK, sd * .22, .55, FZ + .02);                                            // socket
+      glow(blk(head, .16, .14, .02, 0x2f8a1e, sd * .22, .55, FZ + .055, false));                        // inner glow
+      pupil(.09, .09, .03, v.eye, sd * .22, .56, FZ + .07); glow(eyes[eyes.length - 1]);
+      blk(head, .16, .06, .04, shade, sd * .32, .33, FZ + .01, false);                                  // cheekbone
     }
-    for (const sd of [-1, 1]) blk(head, .05, .1, .05, INK, sd * .035, .3, FZ + .02, false);              // nose cavity
-    blk(head, .62, .13, .05, INK, 0, .15, FZ + .02, false);                                             // mouth
-    for (let n = -2; n <= 2; n++) { blk(head, .085, .065, .03, v.head, n * .115, .185, FZ + .055, false); blk(head, .085, .055, .03, shade, n * .115, .105, FZ + .055, false); }
-    blk(head, .72, .07, .07, shade, 0, .035, FZ - .01, false);                                          // jaw line
-    blk(head, .025, .22, .02, deep, .29, .79, FZ + .012, false); blk(head, .08, .025, .02, deep, .25, .69, FZ + .012, false); // crack
-    blk(head, .03, .02, HD * .7, deep, .05, HH + .012, -.08, false);
-    // ribcage: bone torso with dark gaps, sternum, pelvis band, spine down the back
-    for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) blk(hips, .24, .028, .03, INK, sd * .15, BH - .09 - n * .085, BD / 2 + .012, false);
-    blk(hips, .07, .3, .035, tint(v.head, 1.05), 0, BH - .2, BD / 2 + .02, false);
-    blk(hips, BW + .02, .07, BD + .02, 0x2b3038, 0, .05, 0);
-    for (let n = 0; n < 4; n++) blk(hips, .1, .06, .04, shade, 0, .1 + n * .085, -BD / 2 - .02, false);
+    blk(head, .1, .1, .05, INK, 0, .37, FZ + .015, false);                                               // nose
+    blk(head, .56, .1, .04, INK, 0, .16, JZ + .03, false);                                               // mouth slot
+    for (let n = -2; n <= 2; n++) { blk(head, .08, .06, .03, v.head, n * .105, .19, JZ + .055, false); blk(head, .08, .05, .03, shade, n * .105, .12, JZ + .055, false); }
+    blk(head, .02, .2, .02, deep, .3, .82, FZ + .012, false); blk(head, .08, .02, .02, deep, .26, .72, FZ + .012, false); // crack
+    // jacket: open front shows the ribcage, glowing green zip edges and collar
+    blk(hips, .36, BH - .08, .03, v.head, 0, BH / 2 + .02, BD / 2 + .01, false);
+    for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) blk(hips, .13, .025, .02, INK, sd * .085, BH - .1 - n * .08, BD / 2 + .03, false);
+    blk(hips, .04, .26, .02, tint(v.head, 1.05), 0, BH - .18, BD / 2 + .035, false);                     // sternum
+    for (const sd of [-1, 1]) glow(blk(hips, .025, BH - .06, .02, v.accent, sd * .2, BH / 2 + .02, BD / 2 + .02, false));
+    for (const sd of [-1, 1]) { const c = blk(hips, .22, .1, .14, v.body, sd * .24, BH + .02, BD / 2 - .06); c.rotation.z = sd * -.3; }   // popped collar
+    glow(blk(hips, BW + .02, .035, BD + .02, v.accent, 0, .045, 0, false));                              // hem piping
   }
-  if (v.face === 'jack') { // Jack: a carved pumpkin lit from inside, on a vine-green jacket
-    const rib = tint(v.head, .76), dark = 0x4a1c05;
-    for (const x of [-.36, -.12, .12, .36]) blk(head, .05, HH - .12, .025, rib, x, HH / 2 - .02, FZ + .005, false);        // front ribs
-    for (const sd of [-1, 1]) for (const z of [-.22, .12]) blk(head, .025, HH - .12, .05, rib, sd * (HW / 2 + .005), HH / 2 - .02, z, false); // side ribs
-    for (const x of [-.24, .24]) blk(head, .05, .025, HD - .1, rib, x, HH + .005, 0, false);                               // top ribs
-    for (const x of [-.36, -.12, .12, .36]) blk(head, .05, HH - .12, .025, rib, x, HH / 2 - .02, -FZ - .005, false);      // back ribs
-    blk(head, HW + .01, .07, HD + .01, tint(v.head, .86), 0, .035, 0, false);                                              // shaded base
+  if (v.face === 'jack') { // Jack: carved, candle-lit, in a vine-green coat and a tattered cape
+    const dark = 0x4a1c05, F = FZ + .002;
     for (const sd of [-1, 1]) {
-      blk(head, .36, .27, .025, dark, sd * .24, .51, FZ + .012, false);
-      glow(blk(head, .3, .07, .05, v.eye, sd * .24, .44, FZ + .03, false)); glow(blk(head, .2, .07, .05, v.eye, sd * .24, .51, FZ + .03, false));
-      glow(blk(head, .09, .07, .05, 0xfff2b0, sd * .24, .58, FZ + .03, false));                    // carved eyes don't blink
+      blk(head, .36, .28, .025, dark, sd * .21, .56, F + .01, false);                                    // scorched eye cut
+      glow(blk(head, .3, .07, .05, v.eye, sd * .21, .49, F + .03, false)); glow(blk(head, .2, .07, .05, v.eye, sd * .21, .56, F + .03, false)); glow(blk(head, .09, .07, .05, 0xfff2b0, sd * .21, .63, F + .03, false));
     }
-    blk(head, .14, .1, .025, dark, 0, .34, FZ + .012, false); glow(blk(head, .1, .07, .05, v.eye, 0, .34, FZ + .03, false)); // nose
-    blk(head, .76, .21, .025, dark, 0, .17, FZ + .012, false);
-    glow(blk(head, .68, .12, .05, v.eye, 0, .17, FZ + .03, false));                                                         // grin
-    for (const x of [-.22, 0, .22]) blk(head, .075, .06, .055, v.head, x, .205, FZ + .04, false);                           // teeth
-    for (const x of [-.11, .11]) blk(head, .075, .05, .055, v.head, x, .135, FZ + .04, false);
-    // jacket: leaf collar, orange stitching, two seed buttons
-    for (const sd of [-1, 1]) { const c = blk(hips, .26, .05, .16, v.leaf, sd * .15, BH - .01, BD / 2 - .02, false); c.rotation.z = sd * .25; }
+    blk(head, .14, .1, .025, dark, 0, .39, F + .01, false); glow(blk(head, .1, .07, .05, v.eye, 0, .39, F + .03, false)); // nose
+    blk(head, .62, .22, .025, dark, 0, .21, F + .01, false); glow(blk(head, .54, .13, .05, v.eye, 0, .21, F + .03, false)); // grin
+    for (const x of [-.18, 0, .18]) blk(head, .07, .06, .055, v.head, x, .25, F + .04, false);
+    for (const x of [-.09, .09]) blk(head, .07, .05, .055, v.head, x, .17, F + .04, false);
+    for (const sd of [-1, 1]) { const c = blk(hips, .26, .05, .16, v.leaf, sd * .15, BH - .01, BD / 2 - .02, false); c.rotation.z = sd * .25; } // leaf collar
     blk(hips, .03, BH - .1, .02, v.accent, 0, BH / 2, BD / 2 + .012, false);
     for (const y of [.26, .14]) blk(hips, .06, .06, .03, 0xf3d9a0, .07, y, BD / 2 + .02, false);
   }
@@ -980,32 +979,31 @@ function buildRunner(v, addToScene = true) {
   // BACKS of the Haunt crew: the camera rides behind the runner, so this is what players see most
   const BZ = -FZ - .02; // just behind the back of the head
   if (v.face === 'skull') {
-    // a little coffin pack: dark wood, bone cross, green glow seams
-    const wood = 0x3b2a22, cz = -.42;
-    blk(hips, .44, .5, .2, wood, 0, BH / 2 + .06, cz); blk(hips, .32, .12, .2, wood, 0, BH / 2 + .36, cz);
-    blk(hips, .07, .3, .03, v.head, 0, BH / 2 + .1, cz - .115, false); blk(hips, .22, .07, .03, v.head, 0, BH / 2 + .16, cz - .115, false);
-    for (const sd of [-1, 1]) glow(blk(hips, .025, .48, .025, v.eye, sd * .2, BH / 2 + .06, cz - .105, false));
-    // back of the skull: a glowing green fracture and two vent holes
-    [[-.26, .74, .2, .04], [-.15, .64, .04, .2], [-.04, .56, .2, .04], [.07, .47, .04, .18], [.18, .39, .2, .04], [.27, .33, .04, .1]].forEach(([x, y, w, h]) => { blk(head, w + .04, h + .04, .015, INK, x, y, BZ + .006, false); glow(blk(head, w, h, .02, v.eye, x, y, BZ, false)); }); // glowing fracture with a dark edge
-    for (const sd of [-1, 1]) blk(head, .1, .1, .02, INK, sd * .28, .2, BZ, false);
+    // jacket back: a glowing spine and ribs, like an x-ray
+    const bz = -BD / 2 - .012;
+    glow(blk(hips, .05, BH - .06, .02, v.accent, 0, BH / 2 + .02, bz, false));
+    for (let n = 0; n < 3; n++) for (const sd of [-1, 1]) { const r = glow(blk(hips, .22, .03, .02, v.accent, sd * .13, BH - .1 - n * .09, bz, false)); r.rotation.z = sd * -.18; }
+    glow(blk(hips, .16, .05, .02, v.accent, 0, .1, bz, false));                                          // pelvis
+    // back of the skull: a glowing fracture
+    [[-.24, .78, .18, .035], [-.14, .69, .035, .18], [-.04, .61, .18, .035], [.06, .53, .035, .16], [.15, .46, .18, .035]].forEach(([x, y, w, h]) => { blk(head, w + .035, h + .035, .015, INK, x, y, BZ + .006, false); glow(blk(head, w, h, .02, v.eye, x, y, BZ, false)); });
   }
   if (v.face === 'jack') {
-    // a bat carved through the back of the pumpkin, lit from inside
-    blk(head, .62, .3, .02, 0x4a1c05, 0, .52, BZ + .008, false);
-    glow(blk(head, .12, .16, .03, v.eye, 0, .52, BZ, false));                                   // bat body
-    for (const sd of [-1, 1]) {
-      glow(blk(head, .04, .05, .03, v.eye, sd * .04, .62, BZ, false));                          // ears
-      glow(blk(head, .14, .07, .03, v.eye, sd * .13, .56, BZ, false));                          // wing, stepped down
-      glow(blk(head, .1, .06, .03, v.eye, sd * .24, .51, BZ, false));
-      glow(blk(head, .05, .05, .03, v.eye, sd * .28, .46, BZ, false));
-    }
-    // a lantern pack: green iron cage with a flickering flame
-    const lz = -.42, iron = 0x24402a;
-    blk(hips, .34, .06, .2, iron, 0, BH / 2 + .26, lz); blk(hips, .34, .06, .2, iron, 0, BH / 2 - .14, lz);
-    for (const x of [-.15, .15]) for (const z of [lz - .08, lz + .08]) blk(hips, .04, .36, .04, iron, x, BH / 2 + .06, z, false);
-    glow(blk(hips, .2, .28, .1, 0xff9a2e, 0, BH / 2 + .06, lz)); glow(blk(hips, .08, .12, .06, 0xfff2b0, 0, BH / 2 + .1, lz - .04, false));
-    blk(hips, .08, .1, .08, iron, 0, BH / 2 + .34, lz, false);                                    // handle
-    for (const sd of [-1, 1]) { const v1 = blk(hips, .05, .3, .03, v.leaf, sd * .21, BH / 2, -BD / 2 - .015, false); v1.rotation.z = sd * .2; } // vine on the jacket back
+    // a carved bat through the back of the pumpkin, lit from inside
+    blk(head, .6, .3, .02, 0x4a1c05, 0, .58, BZ + .008, false);
+    glow(blk(head, .12, .16, .03, v.eye, 0, .58, BZ, false));
+    for (const sd of [-1, 1]) { glow(blk(head, .04, .05, .03, v.eye, sd * .04, .68, BZ, false)); glow(blk(head, .14, .07, .03, v.eye, sd * .13, .62, BZ, false)); glow(blk(head, .1, .06, .03, v.eye, sd * .24, .57, BZ, false)); glow(blk(head, .05, .05, .03, v.eye, sd * .28, .52, BZ, false)); }
+    // tattered cape on its own pivot at the shoulders, so it can stream behind on the run
+    const cape = new THREE.Group(); cape.position.set(0, BH - .02, -BD / 2 - .03); hips.add(cape); capeRef = cape;
+    const outer = 0x183d28, lining = v.accent;
+    blk(cape, .84, .5, .035, outer, 0, -.25, -.02); blk(cape, .8, .46, .02, lining, 0, -.24, .015, false);   // outer + orange lining
+    [[-.33, .12], [-.17, .2], [0, .1], [.17, .22], [.33, .13]].forEach(([x, h]) => blk(cape, .15, h, .035, outer, x, -.5 - h / 2, -.02)); // ragged hem
+    for (const sd of [-1, 1]) blk(cape, .08, .08, .05, v.leaf, sd * .36, -.02, 0, false);               // leaf clasps
+    for (const sd of [-1, 1]) blk(cape, .06, .52, .03, lining, sd * .4, -.26, -.05, false);           // orange piping down the edges
+    blk(cape, .86, .05, .03, lining, 0, -.02, -.05, false);
+    for (const [x, y] of [[-.22, -.2], [.18, -.32], [-.05, -.4], [.3, -.14], [-.32, -.36]]) glow(blk(cape, .05, .05, .02, 0xffd84a, x, y, -.05, false)); // ember sparks in the cloth
+    // little lantern on the hip
+    const iron = 0x24402a; blk(hips, .16, .03, .16, iron, -.5, .34, .02); blk(hips, .16, .03, .16, iron, -.5, .12, .02);
+    glow(blk(hips, .11, .17, .11, 0xff9a2e, -.5, .23, .02)); blk(hips, .03, .09, .03, iron, -.5, .41, .02, false);
   }
   // TOP piece on its own pivot so it can jiggle
   const top = new THREE.Group(); top.position.y = HH; head.add(top); // rides on the head, so it follows nods and looks
@@ -1042,7 +1040,7 @@ function buildRunner(v, addToScene = true) {
   if (v.item === 'canister') { blk(hips, .25, .4, .25, v.accent, -.43, .32, -.35); blk(hips, .13, .08, .15, INK, -.43, .56, -.35); blk(hips, .07, .05, .08, 0xd5e2e8, -.43, .62, -.31, false); }
 
   const R = { root, flip, flipT: -1, flipDur: 1, flipAxis: 'x', flipDir: 1, rig, hips, head, top, j: 0, jv: 0, jr: 0, jrv: 0, pvy: 0, phz: 0, lastStep: 0, hipBase: HIP,
-    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, glows, blinkSeed: Math.random() * 3 };
+    legL: leg(1), legR: leg(-1), armL: arm(1), armR: arm(-1), phase: 0, eyes, pupils, glows, cape: capeRef, blinkSeed: Math.random() * 3 };
   if (v.face === 'jack') { const l = new THREE.PointLight(0xffa040, 1.4, 3.2, 2); l.position.set(0, HH * .45, FZ + .5); head.add(l); R.candle = l; } // the candle spills warm light on the course
   root.scale.setScalar(1.06);
   root.traverse(o => { if (o.isMesh) o.castShadow = o.material !== HULL; }); // outlines don't need their own shadow
@@ -2810,6 +2808,7 @@ function updateRunner(dt, t) {
   if (act.yaw !== undefined) R.head.rotation.y = damp(R.head.rotation.y, act.yaw, 18, dt);
   if (act.roll !== undefined) R.head.rotation.z = damp(R.head.rotation.z, act.roll, 10, dt);
   R.top.rotation.z = damp(R.top.rotation.z, act.top ?? act.topZ ?? 0, 14, dt);
+  if (R.cape) R.cape.rotation.x = damp(R.cape.rotation.x, -(.12 + clamp(Math.hypot(p.vel.x, p.vel.z) / 20, 0, 1) * .75 + (p.onGround ? 0 : .2)) + Math.sin(t * 9) * .04, 7, dt); // the cape streams with speed
   for (const q of R.pupils) { q.position.x = q.userData.base.x + R.head.rotation.y * .07; q.position.y = q.userData.base.y - R.head.rotation.x * .06; }
   if (R.glows.length) { // candle flicker for Jack, a slow soul-pulse for Bones
     const f = R.candle ? .82 + .12 * Math.sin(t * 11.3) * Math.sin(t * 7.1 + 1) + .06 * Math.sin(t * 23) : .8 + .2 * Math.sin(t * 2.4);
