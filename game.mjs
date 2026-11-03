@@ -1576,7 +1576,7 @@ $('submitRanked').onclick = async () => {
 };
 /* ON-CHAIN RECORD — a server-verified run can be written to WickRunnerScores on Robinhood Chain testnet.
    The player sends the transaction (testnet gas only); the contract accepts only runs the verifier signed. */
-const SCORES = { address: null }; // '0x…' from contracts/deploy.mjs; the button stays hidden until set
+const SCORES = { address: '0x2417104586F701fD9AbBc7e068A461ad5766Fe89' }; // WickRunnerScores on Robinhood Chain testnet
 // EMAIL LOGIN — Privy (vendor/privy.js, built from wallet/privy.js) signs players in by email and gives each an
 // embedded wallet on Robinhood Chain testnet. That wallet signs the ranked/arena messages and sends on-chain records.
 let privyAppId = null, privyWatching = false;

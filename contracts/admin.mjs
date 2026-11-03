@@ -10,7 +10,7 @@ const [cmd, who, reason = ''] = process.argv.slice(2);
 const db = new DatabaseSync(resolve(process.env.DATA_DIR || 'data', 'parkour.sqlite'));
 const provider = new JsonRpcProvider(process.env.CHAIN_RPC || 'https://rpc.testnet.chain.robinhood.com', 46630, { staticNetwork: true });
 const abi = ['function setBanned(address[],bool,bytes32[])', 'function refill(bytes32,address[])', 'function top(bytes32) view returns (tuple(address player,uint64 score,uint64 seq)[])', 'function banned(address) view returns (bool)'];
-const c = new Contract(process.env.SCORES_ADDRESS, abi, process.env.OWNER_KEY ? new Wallet(process.env.OWNER_KEY, provider) : provider);
+const c = new Contract(process.env.SCORES_ADDRESS || '0x2417104586F701fD9AbBc7e068A461ad5766Fe89', abi, process.env.OWNER_KEY ? new Wallet(process.env.OWNER_KEY, provider) : provider);
 const recordedBoards = w => db.prepare('SELECT DISTINCT board FROM scores WHERE tx IS NOT NULL' + (w ? ' AND wallet=?' : '')).all(...(w ? [w] : [])).map(r => r.board);
 const dbTop = board => db.prepare(`SELECT s.wallet, s.score FROM scores s WHERE s.board=? AND s.tx IS NOT NULL AND s.wallet NOT IN (SELECT wallet FROM banned)
   AND NOT EXISTS (SELECT 1 FROM scores o WHERE o.board=s.board AND o.wallet=s.wallet AND o.tx IS NOT NULL AND (o.score > s.score OR (o.score = s.score AND (o.pos < s.pos OR (o.pos = s.pos AND o.id < s.id)))))

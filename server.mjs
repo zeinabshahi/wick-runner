@@ -9,7 +9,7 @@ import { verifyMessage, Wallet, AbiCoder, keccak256, id as hashText, getBytes, J
 // On-chain records: the verifier key signs each verified run so the player can record it on WickRunnerScores
 // (contracts/). The database stays the source of truth; the chain is the player's public proof. Both use the same
 // ranking (best per wallet, highest first, earlier record wins a tie) and the same ban list (contracts/admin.mjs).
-const VERIFIER = process.env.VERIFIER_KEY ? new Wallet(process.env.VERIFIER_KEY) : null, SCORES = process.env.SCORES_ADDRESS?.toLowerCase();
+const VERIFIER = process.env.VERIFIER_KEY ? new Wallet(process.env.VERIFIER_KEY) : null, SCORES = (process.env.SCORES_ADDRESS || '0x2417104586F701fD9AbBc7e068A461ad5766Fe89').toLowerCase(); // deployed 2026-11-03, verifier 0xf7115993…55C7
 const RPC = process.env.CHAIN_RPC || 'https://rpc.testnet.chain.robinhood.com', CHAIN_ID = 46630, ATTEST_TTL = 7 * 86400;
 const runEvent = new Interface(['event Run(address indexed player, bytes32 indexed board, uint64 score, bytes32 indexed runId, bool newBest)']);
 let chain = null; const provider = () => chain ||= new JsonRpcProvider(RPC, CHAIN_ID, { staticNetwork: true });
