@@ -5,3 +5,6 @@ artifacts/
 *.log
 video/
 .claude/
+STRATEGY.fa.md
+GAMEPLAY-REVIEW.fa.md
+**/X-START.fa.md
