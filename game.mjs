@@ -1560,10 +1560,9 @@ async function beginRun() {
 $('rankedLogin').onclick = async () => {
   const b = $('rankedLogin'); b.disabled = true;
   try {
-    if (!window.ethereum) throw new Error('Open in a browser with a wallet to sign in. Practice is always free.');
-    const [account] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const account = await emailLogin(), eth = await WickWallet.provider();
     const { message } = await api('auth/challenge', { wallet: account });
-    const signature = await window.ethereum.request({ method: 'personal_sign', params: [utf8hex(message), account] });
+    const signature = await eth.request({ method: 'personal_sign', params: [utf8hex(message), account] });
     const result = await api('auth/verify', { signature }); rankedSession = result.wallet; renderOnline();
   } catch (e) { $('onlineStatus').textContent = e.code === 4001 ? 'Sign-in cancelled. You can keep practicing.' : e.message; }
   finally { b.disabled = !onlineAvailable; }
@@ -1578,28 +1577,27 @@ $('submitRanked').onclick = async () => {
 /* ON-CHAIN RECORD — a server-verified run can be written to WickRunnerScores on Robinhood Chain testnet.
    The player sends the transaction (testnet gas only); the contract accepts only runs the verifier signed. */
 const SCORES = { address: null }; // '0x…' from contracts/deploy.mjs; the button stays hidden until set
-const CHAIN_HEX = '0x' + (46630).toString(16);
-async function useTestnet() {
-  try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_HEX }] }); }
-  catch (e) {
-    if (e.code !== 4902) throw e;
-    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: CHAIN_HEX, chainName: CHAIN.name, rpcUrls: [CHAIN.rpc], blockExplorerUrls: [CHAIN.explorer], nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 } }] });
-  }
-}
-async function reportOnchain(id, tx) { // lets the server mark the same run as on-chain, so both boards agree
-  for (let i = 0; i < 20; i++) { try { return await api('runs/onchain', { id, tx }); } catch (e) { if (!/not confirmed/.test(e.message)) throw e; await new Promise(r => setTimeout(r, 1500)); } }
+// EMAIL LOGIN — Privy (vendor/privy.js, built from wallet/privy.js) signs players in by email and gives each an
+// embedded wallet on Robinhood Chain testnet. That wallet signs the ranked/arena messages and sends on-chain records.
+let privyAppId = null, privyWatching = false;
+async function emailLogin() {
+  if (!privyAppId) throw new Error('Email sign-in is not configured yet. Practice is always free.');
+  if (!window.WickWallet) await new Promise((res, rej) => { // ~6 MB, so it loads only when someone signs in
+    const el = document.createElement('script'); el.src = './vendor/privy.js'; el.onload = res; el.onerror = () => rej(new Error('Sign-in did not load. Check your connection; practice is always free.')); document.head.append(el);
+  });
+  if (!privyWatching) { privyWatching = true; WickWallet.onChange(onPrivyChange); }
+  await WickWallet.init(privyAppId); return WickWallet.login();
 }
 function offerOnchain(a, scoreId) {
-  if (!SCORES.address || !window.ethereum) return;
+  if (!SCORES.address || !window.WickWallet?.address()) return;
   const b = $('recordOnchain'); b.classList.remove('hidden'); b.disabled = false; b.textContent = 'Record on-chain (testnet)';
   b.onclick = async () => {
-    b.disabled = true; b.textContent = 'Confirm in your wallet…';
+    b.disabled = true; b.textContent = 'Confirm the transaction…';
     try {
-      await useTestnet();
       const { Interface } = await loadEthers();
       const data = new Interface(['function record(bytes32,uint64,bytes32,uint64,bytes)']).encodeFunctionData('record', [a.board, a.score, a.runId, a.deadline, a.sig]);
-      const [from] = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const tx = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ from, to: SCORES.address, data }] });
+      const eth = await WickWallet.provider(), from = WickWallet.address();
+      const tx = await eth.request({ method: 'eth_sendTransaction', params: [{ from, to: SCORES.address, data }] });
       b.textContent = 'Waiting for the block…'; await reportOnchain(scoreId, tx); b.textContent = '✓ Recorded on-chain'; b.onclick = () => window.open(`${CHAIN.explorer}/tx/${tx}`, '_blank', 'noopener'); b.disabled = false;
     } catch (e) { b.textContent = e.code === 4001 ? 'Record on-chain (testnet)' : 'Retry on-chain record'; b.disabled = false; if (e.code !== 4001) popup(e.message?.slice(0, 90) || 'Transaction failed', '#ff7878'); }
   };
@@ -2269,15 +2267,14 @@ const DEFAULT_CHECKS = [['Your wallet created or owns this token', null], ['It h
 $('mkSign').addEventListener('click', async () => {
   const c = sanitizeArena(arenaDraft);
   if (!c.k) return setChecks([['Enter your token contract first', false]]);
-  if (!window.ethereum) return setChecks([['A browser wallet is needed to verify', false]]);
-  let addr; try { [addr] = await window.ethereum.request({ method: 'eth_requestAccounts' }); addr = addr.toLowerCase(); } catch (e) { return setChecks([['Wallet connection cancelled', false]]); }
+  let addr; try { addr = await emailLogin(); } catch (e) { return setChecks([[e.message || 'Sign-in cancelled', false]]); }
   setChecks([['Checking on-chain…', null]]);
   const isCreator = (await tokenCreators(c.k)).includes(addr);
   let holds = null; try { holds = await holdsWrun(addr); } catch (e) {}
   const list = [[`${addr.slice(0, 6)}…${addr.slice(-4)} created or owns this token`, isCreator], [holds === null ? '$WRUN is not live yet — the holding check opens at launch' : 'Holds at least 1,000,000 $WRUN', holds]];
   if (!isCreator || holds !== true) return setChecks([...list, ['Signature', null]]);
   try {
-    const sg = await window.ethereum.request({ method: 'personal_sign', params: [utf8hex(await arenaMessage(c)), addr] });
+    const sg = await (await WickWallet.provider()).request({ method: 'personal_sign', params: [utf8hex(await arenaMessage(c)), addr] });
     arenaDraft.cr = addr; arenaDraft.sg = sg; setChecks([...list, ['Signed — your invite link now carries the verified badge', true]]); renderArenaMaker();
   } catch (e) { setChecks([...list, ['Signature cancelled', false]]); }
 });
@@ -2352,11 +2349,8 @@ async function readTokenBalance(addr) {
   return { dec, bal };
 }
 async function connectWallet() {
-  if (!window.ethereum) { $('walletInfo').textContent = 'No browser wallet found — you can play without one'; return; }
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    await updateWallet(accounts);
-  } catch (e) { walletInfo = 'Could not read the wallet (' + (e.message || 'cancelled').slice(0, 60) + ')'; }
+  try { await updateWallet([await emailLogin()]); }
+  catch (e) { walletInfo = (e.message || 'Sign-in cancelled').slice(0, 80); }
   renderWallet();
 }
 async function updateWallet(accounts) {
@@ -2373,13 +2367,13 @@ async function updateWallet(accounts) {
   renderWallet();
 }
 async function clearRankedSession() { rankedSession = null; renderOnline(); try { await api('auth/logout', {}); } catch {} }
-window.ethereum?.on?.('accountsChanged', accounts => { updateWallet(accounts); clearRankedSession(); });
-window.ethereum?.on?.('chainChanged', () => updateWallet(wallet ? [wallet] : []));
-window.ethereum?.on?.('disconnect', () => { updateWallet([]); clearRankedSession(); });
+// Account changes come from Privy (email login + embedded wallet); browser-extension wallets are never used.
+let lastPrivyAddr = null;
+function onPrivyChange(a) { if (a === lastPrivyAddr) return; const was = lastPrivyAddr; lastPrivyAddr = a; updateWallet(a ? [a] : []); if (was && rankedSession && rankedSession !== a) clearRankedSession(); }
 setInterval(() => { if (wallet && !document.hidden && tokenLinks()) updateWallet([wallet]); }, 45000);
 function renderWallet() {
-  $('walletBtn').textContent = wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : 'Connect wallet';
-  $('walletInfo').textContent = wallet ? walletInfo : 'Balance connection · read-only · no transaction';
+  $('walletBtn').textContent = wallet ? `${wallet.slice(0, 6)}…${wallet.slice(-4)}` : 'Sign in with email';
+  $('walletInfo').textContent = wallet ? walletInfo : 'Email sign-in · secure wallet by Privy';
 }
 $('walletBtn').addEventListener('click', e => { e.stopPropagation(); connectWallet(); });
 $('termsBtn').addEventListener('click', () => $('terms').classList.remove('hidden'));
@@ -3196,4 +3190,4 @@ window.__cp = { buildRunner, VIBERS, setViber, THREE, get runner() { return runn
   advance(sec) { for (let s = 0; s < sec; s += 1 / 60) tick(1 / 60, performance.now()); }, // test hook: run frames without rAF
   get finishZ() { return finishZ; }, get lastRun() { return game.lastRun; }, get runLog() { return runLog; }, result: runResult, retryCheckpoint, resolveDeath, replayRun, tick, get camera() { return camera; }, render: () => composer.render(), Sfx, setArena(c) { level = arenaLevel(sanitizeArena(c)); }, // camera/render/Sfx: frame-by-frame video capture (video/capture.mjs)
   verifyArena, arenaMessage, sanitizeArena, tokenCreators };
-if (!VERIFY_MODE) api('status').then(s => { onlineAvailable = s.online && s.rules === RULES_VERSION; rankedSession = s.wallet; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());
+if (!VERIFY_MODE) api('status').then(s => { privyAppId = s.privy; if (s.scores) SCORES.address ||= s.scores; onlineAvailable = s.online && s.rules === RULES_VERSION; rankedSession = s.wallet; renderOnline(); loadOnlineBoard(); }).catch(() => renderOnline());

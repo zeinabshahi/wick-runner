@@ -104,3 +104,11 @@ Post-run goals use the actual result: a reachable candle target, fewer deaths, s
 Laser gates block part of a rooftop up to seven metres high: steer into the marked left or right safe lane. Mine strips can be avoided sideways or jumped over. Hazards start after the opening section, only on stable green platforms, away from checkpoints and at least eight candles after boost pads/springs and four after feature gaps. A 22-metre preview tells the player which side is safe. Placement is seeded and replayed identically. Old scenery is discarded while the latest checkpoint and its approach remain available for respawn.
 
 New community arenas offer 600/900/1,200 candles. Older short arena links retain their signed configuration but play at least 600 candles under rules v5. The input recording limit remains 30 minutes; courses are long, not literally infinite except Daily. Full automated completion of every 1,200-candle campaign has not been established; the regression check covers the first 250 candles of CP01 and full completions of all three 900-candle Sprints.
+
+## Sign-in (Privy, email only)
+
+vibe/vibe does not allow regular browser wallets (MetaMask etc.). Players sign in with email through [Privy](https://privy.io), which creates an embedded wallet on Robinhood Chain testnet; that wallet signs ranked/arena messages and sends on-chain records. No browser extension wallet is ever requested.
+
+1. Create an app at dashboard.privy.io, enable **Email** login only, and add your site domain (and `http://localhost:8123`) to allowed origins.
+2. Run the server with `PRIVY_APP_ID=<app id>` (plus `VERIFIER_KEY` and `SCORES_ADDRESS` for on-chain records, see `contracts/`).
+3. After changing `wallet/privy.js`, rebuild the bundle with `npm run build:wallet` (output `vendor/privy.js` is committed).

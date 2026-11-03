@@ -764,7 +764,7 @@
         <div class="tkaddr" id="tkAddrRow" hidden><span class="lbl">Contract</span><code id="tkAddr"></code><button class="linkbtn" id="tkCopy">Copy</button><a id="tkExplorer" target="_blank" rel="noopener noreferrer">Explorer ↗</a></div>
         <a class="big" id="tkBuy" target="_blank" rel="noopener noreferrer" hidden>Buy $WRUN on vibe/vibe ↗</a>
         <ol class="tksteps timeline">
-          <li>Get a wallet on Robinhood Chain Testnet and testnet ETH from the official faucet.</li>
+          <li>Sign in with your email (Privy creates your wallet), copy its address, and get testnet ETH from the official faucet.</li>
           <li>Open our token page on vibe/vibe <b>only from the button above</b>, and check the contract address matches.</li>
           <li>Read the launch page terms and supported trading route. Final platform settings will be published here before launch.</li>
         </ol>
@@ -804,7 +804,7 @@
       <details><summary>Does auto-run earn the score for me?</summary><p>Auto-run keeps you moving. Distance gives only 2 points per metre, and pickups give 10 flat points. Intentional jumps, slides, dashes and grabs build your skill chain; unprompted automatic crossings never create a combo or Flow. Your result shows the full score breakdown.</p></details>
       <details><summary>Are the charts real market data?</summary><p>No. Every chart is generated for gameplay and says nothing about the price of any token.</p></details>
       <details><summary>Do points or tiers have value?</summary><p>No. XP, Season Points, tiers and trails are in-game progress only. They are not tokens and have no monetary value.</p></details>
-      <details><summary>Do I need a wallet?</summary><p>No wallet is needed to practice. Connecting reads your public token balance. Ranked sign-in and arena verification each ask for a free message signature; the game never requests a token approval or transfer.</p></details>
+      <details><summary>Do I need a wallet?</summary><p>No. Practice needs nothing. For ranked play and on-chain records you sign in with your email: Privy creates a secure wallet for you on Robinhood Chain testnet, so there is nothing to install and no browser wallet is used. Recording a run on-chain is a testnet transaction; the game never requests a token approval.</p></details>
       <details><summary>Is this an official vibe/vibe game?</summary><p>No. Wick Runner is an independent project launching on vibe/vibe. It is not operated, endorsed or audited by vibe/vibe.</p></details>
     </div>
   </section>
@@ -838,7 +838,7 @@
       <div class="mk-verify">
         <div><b>Verified arena</b><span class="lbl">needed for a verified badge</span></div>
         <ul id="mkChecks"></ul>
-        <button class="big alt" id="mkSign" type="button">Connect wallet &amp; verify</button>
+        <button class="big alt" id="mkSign" type="button">Sign in with email &amp; verify</button>
         <p class="mk-fine">You sign one free message (no transaction, no approval). Anyone opening your link re-checks it on-chain.</p>
       </div>
     </div>
@@ -873,8 +873,8 @@
   <p><b>Testnet.</b> Testnet ETH and testnet tokens have no monetary value. Never send mainnet funds to testnet. A testnet token address will not be the mainnet address.</p>
   <p><b>Incentives.</b> Any future distribution eligibility follows the published programme terms and review. Nothing is guaranteed: a rank, tier, mission or role is not a promise of any allocation.</p>
   <p><b>Fair play.</b> Modified or automated runs, multiple accounts, exploiting bugs or any other manipulation may remove eligibility.</p>
-  <p><b>Safety.</b> We will never DM you first and never ask for a seed phrase or private key. Only use official links. Playing is free. Optional balance checks are read-only. Ranked sign-in and arena publishing ask you to sign a message explaining its purpose. Neither transfers funds or approves tokens.</p>
-  <p><b>Privacy.</b> Practice progress is stored in this browser. Connecting sends your public address to the Robinhood Chain RPC for balance checks; arena verification also uses its explorer. Ranked play stores your public wallet address, chosen display name, run inputs and verified scores on the score service, using an essential sign-in cookie. Display names and shortened wallet addresses appear on the shared board. Your browser also contacts font and code providers when loaded from static hosting. No email or seed phrase is requested.</p>
+  <p><b>Safety.</b> We will never DM you first and never ask for a seed phrase or private key. Only use official links. Playing is free. Sign-in is by email through Privy; no browser wallet is used. Ranked sign-in and arena publishing ask your Privy wallet to sign a message explaining its purpose, and recording a run on-chain is a testnet transaction you confirm. Nothing approves tokens.</p>
+  <p><b>Privacy.</b> Practice progress is stored in this browser. Email sign-in is handled by Privy, which stores your email and the embedded wallet it creates for you; that wallet's public address is sent to the Robinhood Chain RPC for balance checks, and arena verification also uses its explorer. Ranked play stores your public wallet address, chosen display name, run inputs and verified scores on the score service, using an essential sign-in cookie. Display names and shortened wallet addresses appear on the shared board. Your browser also contacts font and code providers when loaded from static hosting. We never ask for a seed phrase.</p>
   <p class="lbl" style="line-height:1.7">Not financial, legal or investment advice. Any token can lose value.</p>
   <button class="big" id="termsClose">Close</button>
 </div></div>
@@ -884,7 +884,7 @@
       <div class="brand"><div class="mark"><svg viewBox="0 0 140 112" width="24" height="24" aria-hidden="true"><path fill="#0b1018" d="M14 20H35L46 63L61 36H78L90 63L104 13H126L103 99H81L69 73L56 99H34Z M20 6H28V20H20Z M110 0H118V13H110Z"/></svg></div>Wick Runner <small>· launching on vibe/vibe · testnet</small></div>
       <div style="display:flex; gap:10px; align-items:center;"><div class="profile panel"><span class="lvlbadge" id="lvlbadge">LV 1</span><input id="pname" maxlength="16" aria-label="Player name"><span id="xp">0 XP</span></div><button class="iconbtn panel" id="gear" aria-label="Settings">⚙</button></div>
       </div>
-      <div class="walletrow"><button class="big alt small" id="walletBtn">Connect wallet</button><span class="lbl" id="walletInfo">Balance connection · read-only · no transaction</span><span style="flex:1"></span><button class="linkbtn" id="termsBtn">Terms, incentives &amp; safety</button>
+      <div class="walletrow"><button class="big alt small" id="walletBtn">Sign in with email</button><span class="lbl" id="walletInfo">Email sign-in · secure wallet by Privy</span><span style="flex:1"></span><button class="linkbtn" id="termsBtn">Terms, incentives &amp; safety</button>
     </div>
     <div class="hero">
       <div>
@@ -909,7 +909,7 @@
         <div class="card panel"><h2>Daily missions <span class="lbl">reset at 00:00 UTC</span></h2><div id="missions"></div></div>
       </div>
     </div>
-    <div class="card panel online-card"><div><span class="lbl">Shared leaderboard</span><h2 id="onlineTitle">Practice makes a cleaner line.</h2><p id="onlineStatus" role="status">Checking ranked play…</p></div><div class="online-actions"><button class="big alt small" id="rankedLogin">Sign in for ranked</button><label><input type="checkbox" id="rankedMode"> Ranked run</label><button class="linkbtn hidden" id="rankedLogout">Sign out</button></div><ol id="onlineBoard" class="boardlist"></ol></div>
+    <div class="card panel online-card"><div><span class="lbl">Shared leaderboard</span><h2 id="onlineTitle">Practice makes a cleaner line.</h2><p id="onlineStatus" role="status">Checking ranked play…</p></div><div class="online-actions"><button class="big alt small" id="rankedLogin">Sign in with email for ranked</button><label><input type="checkbox" id="rankedMode"> Ranked run</label><button class="linkbtn hidden" id="rankedLogout">Sign out</button></div><ol id="onlineBoard" class="boardlist"></ol></div>
     <div class="disclaimer">Simulated charts · local progress stays in this browser · shared scores require a verified replay · no promised payouts</div>
     <details class="help"><summary>Controls &amp; moves</summary>
       <div class="controls">

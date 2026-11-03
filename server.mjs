@@ -111,7 +111,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'POST' && req.headers.origin !== origin.origin) throw fail('Request origin not allowed.', 403);
       if (req.method === 'GET' && url.pathname === '/api/status') {
         let wallet = null; try { wallet = session(req); } catch {}
-        return json(res, 200, { online: true, wallet, rules: RULES_VERSION });
+        return json(res, 200, { online: true, wallet, rules: RULES_VERSION, privy: process.env.PRIVY_APP_ID || null, scores: SCORES || null });
       }
       if (req.method === 'POST' && url.pathname === '/api/auth/challenge') {
         limit(req, 'auth', 12); const { wallet } = await body(req); if (!address(wallet)) throw fail('Invalid wallet.');
@@ -177,7 +177,7 @@ const server = http.createServer(async (req, res) => {
       throw fail('Endpoint not found.', 404);
     }
     if (!['GET', 'HEAD'].includes(req.method)) throw fail('Method not allowed.', 405);
-    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/brand/preview.png': 'assets/brand/wick-runner/link-card-1200x630.png', '/assets/brand/wick-runner/link-card-1200x630.png': 'assets/brand/wick-runner/link-card-1200x630.png' };
+    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/vendor/privy.js': 'vendor/privy.js', '/brand/preview.png': 'assets/brand/wick-runner/link-card-1200x630.png', '/assets/brand/wick-runner/link-card-1200x630.png': 'assets/brand/wick-runner/link-card-1200x630.png' };
     let path = allowed[url.pathname];
     if (url.pathname.startsWith('/vendor/three/')) {
       const relative = decodeURIComponent(url.pathname.slice(14));
