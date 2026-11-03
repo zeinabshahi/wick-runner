@@ -862,7 +862,7 @@ const VIBERS = [
   { name: 'Ember', bio: 'EMBER / the rooftop artist. Leave a bright line behind.', accent: 0xff859c, head: 0xa8513e, body: 0x202a36, arm: 0xa8513e, cuff: 0xd5e2e8, cuffBand: 0x15161a, feet: 0x162438, sole: 0xff859c, top: 'mohawk', hair: 0x573a3b, face: 'big', eye: 0xdedacd, item: 'canister', bg: '#d9e4ee' },
   // Haunt the Chain crew
   { name: 'Bones', haunt: true, bio: 'BONES / HAUNT CREW. The liquidation fog never caught him. Twice.', accent: 0x9dff6a, head: 0xece6d2, body: 0x17191f, arm: 0x17191f, cuff: 0xe2dbc4, feet: 0x17191f, sole: 0x9dff6a, face: 'skull', eye: 0x9dff6a, bg: '#2a2438' },
-  { name: 'Jack', haunt: true, bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xf2801f, body: 0x2f6b3a, arm: 0x2f6b3a, cuff: 0xf2801f, feet: 0x1f2a22, sole: 0xffa62e, top: 'stem', stem: 0x6b5a2a, leaf: 0x86c442, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
+  { name: 'Jack', haunt: true, bio: 'JACK / HAUNT CREW. Carved on a red candle, lit by a green one.', accent: 0xffa62e, head: 0xf2821c, body: 0x2f6b3a, arm: 0x2f6b3a, cuff: 0xf2801f, feet: 0x1f2a22, sole: 0xffa62e, top: 'stem', stem: 0x5a3a22, leaf: 0x8fd448, face: 'jack', eye: 0xffd84a, bg: '#2a2438' },
 ];
 const INK = 0x15161a, OUTLINE = new THREE.LineBasicMaterial({ color: INK });
 // Toon shading (3 crisp light bands) + an inverted-hull ink outline: the thick, even black silhouette of the art.
@@ -885,8 +885,15 @@ function buildRunner(v, addToScene = true) {
   // body (narrower than the head, like the art) and the big head on top of it
   blk(hips, BW, BH, BD, v.body, 0, BH / 2, 0);
   const head = new THREE.Group(); head.position.y = BH; hips.add(head);
-  if (v.face === 'jack') { // a round pumpkin from five lobes: tallest and deepest in the middle, the ink seams between them are the ribs
-    [[-.4, .2, .74, .72], [-.2, .2, .9, .84], [0, .2, .96, HD], [.2, .2, .9, .84], [.4, .2, .74, .72]].forEach(([x, w, h, d], k) => blk(head, w, h, d, k % 2 ? tint(v.head, .92) : v.head, x, .04 + h / 2 + (.96 - h) / 2 * .4, 0));
+  if (v.face === 'jack') { // voxel pumpkin: five lobes, each with a stepped-in cap and base so the silhouette reads round
+    const groove = tint(v.head, .72);
+    blk(head, HW - .06, .82, HD - .1, groove, 0, .48, 0, false);                                   // dark core shows in the grooves
+    [[-.41, .18, .7, .66], [-.205, .2, .86, .8], [0, .22, .92, HD], [.205, .2, .86, .8], [.41, .18, .7, .66]].forEach(([x, w, h, d]) => {
+      const y = .48; blk(head, w, h - .12, d, v.head, x, y, 0);
+      blk(head, w - .04, .06, d - .1, tint(v.head, 1.06), x, y + h / 2 - .03, 0, false);           // rounded top step
+      blk(head, w - .04, .06, d - .1, tint(v.head, .86), x, y - h / 2 + .03, 0, false);            // rounded bottom step
+    });
+    for (const sd of [-1, 1]) [[-.22, .2, .74], [0, .26, .8], [.22, .2, .74]].forEach(([z, d, h]) => blk(head, .06, h - .12, d, tint(v.head, .96), sd * (HW / 2 + .01), .48, z)); // side lobes
   } else if (v.face === 'skull') { // cranium, cheek band and a narrower jaw: reads as a skull, not a box
     blk(head, HW, .66, HD, v.head, 0, .63, 0);
     blk(head, HW - .08, .14, HD - .06, tint(v.head, .93), 0, .23, .02);
@@ -957,23 +964,25 @@ function buildRunner(v, addToScene = true) {
     for (const sd of [-1, 1]) { const c = blk(hips, .22, .1, .14, v.body, sd * .24, BH + .02, BD / 2 - .06); c.rotation.z = sd * -.3; }   // popped collar
     glow(blk(hips, BW + .02, .035, BD + .02, v.accent, 0, .045, 0, false));                              // hem piping
   }
-  if (v.face === 'jack') { // Jack: carved, candle-lit, in a vine-green coat and a tattered cape
-    const dark = 0x4a1c05, F = FZ + .002;
-    for (const sd of [-1, 1]) {
-      blk(head, .36, .28, .025, dark, sd * .21, .56, F + .01, false);                                    // scorched eye cut
-      glow(blk(head, .3, .07, .05, v.eye, sd * .21, .49, F + .03, false)); glow(blk(head, .2, .07, .05, v.eye, sd * .21, .56, F + .03, false)); glow(blk(head, .09, .07, .05, 0xfff2b0, sd * .21, .63, F + .03, false));
-    }
-    blk(head, .14, .1, .025, dark, 0, .39, F + .01, false); glow(blk(head, .1, .07, .05, v.eye, 0, .39, F + .03, false)); // nose
-    blk(head, .62, .22, .025, dark, 0, .21, F + .01, false); glow(blk(head, .54, .13, .05, v.eye, 0, .21, F + .03, false)); // grin
-    for (const x of [-.18, 0, .18]) blk(head, .07, .06, .055, v.head, x, .25, F + .04, false);
-    for (const x of [-.09, .09]) blk(head, .07, .05, .055, v.head, x, .17, F + .04, false);
+  if (v.face === 'jack') { // Jack: pixel-carved heart eyes and a wide toothy grin, lit from inside
+    const F = FZ + .02, px = .044, edge = lam(0x3a1503);
+    const plain = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); head.add(m); return m; };
+    const pix = (rows, cx, cy) => rows.forEach((r, ry) => { // one block per run of X: solid carved shapes, no grid lines
+      for (let a = 0; a < r.length; a++) { if (r[a] !== 'X') continue; let b = a; while (r[b + 1] === 'X') b++;
+        const w = (b - a + 1) * px, x = cx + ((a + b) / 2 - (r.length - 1) / 2) * px, y = cy - ry * px;
+        plain(w + .03, px + .03, .02, edge, x, y, F - .008);                                       // scorched carving edge
+        const g = plain(w, px, .03, new THREE.MeshBasicMaterial({ color: v.eye }), x, y, F); g.userData.c = v.eye; glows.push(g); a = b; }
+    });
+    const HEART = ['XX.XX', 'XXXXX', 'XXXXX', '.XXX.', '..X..'];
+    for (const sd of [-1, 1]) pix(HEART, sd * .19, .68);
+    pix(['X...........X', 'XX.........XX', 'XXX.X.X.X.XXX', '.XXXXXXXXXXX.', '..XXXXXXXXX..', '....XXXXX....'], 0, .4);
     for (const sd of [-1, 1]) { const c = blk(hips, .26, .05, .16, v.leaf, sd * .15, BH - .01, BD / 2 - .02, false); c.rotation.z = sd * .25; } // leaf collar
     blk(hips, .03, BH - .1, .02, v.accent, 0, BH / 2, BD / 2 + .012, false);
     for (const y of [.26, .14]) blk(hips, .06, .06, .03, 0xf3d9a0, .07, y, BD / 2 + .02, false);
   }
   // Reflective courier harness and compact pack give the crew a shared district identity.
   if (!v.haunt) blk(hips, .5, .34, .22, tint(v.body, .7), 0, BH / 2, -.4); // the Haunt crew carries its own back piece (below)
-  if (v.face !== 'skull') for (const side of [-1, 1]) { blk(hips, .075, .3, .035, v.accent, side * .22, BH / 2, BD / 2 + .04); blk(head, .16, .07, .035, v.accent, side * .32, .1, FZ + .06); } // Bones shows his ribcage instead
+  if (v.face !== 'skull') for (const side of [-1, 1]) { blk(hips, .075, .3, .035, v.accent, side * .22, BH / 2, BD / 2 + .04); if (!v.haunt) blk(head, .16, .07, .035, v.accent, side * .32, .1, FZ + .06); } // Bones shows his ribcage instead
   // Shared pack clasp and reflective boot trim tie the crew together from behind.
   if (!v.haunt) { blk(hips, .24, .055, .035, v.accent, 0, BH / 2 + .08, -.53, false); for (const side of [-1,1]) blk(hips, .055, .055, .035, 0xd5e2e8, side * .15, BH / 2 - .06, -.53, false); }
   // BACKS of the Haunt crew: the camera rides behind the runner, so this is what players see most
@@ -1016,10 +1025,10 @@ function buildRunner(v, addToScene = true) {
     blk(top, .13, .055, .13, v.accent, -.46, .285, -.27);
     blk(top, .32, .035, .2, v.accent, .12, .055, -.18, false);
   }
-  if (v.top === 'stem') { // twisted stem, a leaf and a curl of vine
-    const st = blk(top, .14, .16, .14, v.stem, 0, .08, 0); st.rotation.y = .4; const tip = blk(top, .11, .1, .11, tint(v.stem, .8), .03, .2, .02); tip.rotation.z = -.35;
-    const lf = blk(top, .26, .035, .16, v.leaf, .19, .1, .06); lf.rotation.z = -.35; blk(top, .1, .02, .02, tint(v.leaf, .75), .19, .125, .06, false).rotation.z = -.35;
-    [[-.12, .05], [-.18, .1], [-.16, .16], [-.1, .17]].forEach(([x, y]) => blk(top, .045, .045, .045, v.leaf, x, y, -.06, false));
+  if (v.top === 'stem') { // chunky square stem and a bright stepped leaf
+    blk(top, .2, .24, .2, v.stem, -.04, .1, -.02); blk(top, .16, .04, .16, tint(v.stem, 1.2), -.04, .23, -.02, false);
+    [[.16, .12, .14], [.24, .16, .12], [.3, .1, .1], [.2, .2, .08]].forEach(([x, y, w]) => blk(top, w, .07, .16, v.leaf, x, y, .02));
+    blk(top, .06, .04, .12, tint(v.leaf, .75), .22, .15, .02, false);                              // leaf vein
   }
   if (v.top === 'mohawk') [[.2, .24], [.06, .38], [-.08, .46], [-.22, .32]].forEach(([z, h]) => blk(top, .11, h, .11, v.hair, 0, h / 2, z)); // chunky strips, tallest toward the back
 
