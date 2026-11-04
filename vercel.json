@@ -1,5 +1,9 @@
 {
   "functions": {
-    "api/runs/submit.mjs": { "maxDuration": 60, "memory": 2048 }
-  }
+    "api/runs/submit.mjs": {
+      "maxDuration": 60,
+      "memory": 2048
+    }
+  },
+  "cleanUrls": true
 }

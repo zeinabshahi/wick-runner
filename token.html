@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="$WRUN is the Wick Runner community token on Robinhood Chain testnet: holder perks, verified arenas and the roadmap.">
+<meta name="theme-color" content="#0b1018">
+<title>$WRUN token</title>
+<meta property="og:title" content="$WRUN · Wick Runner token">
+<meta property="og:image" content="/assets/brand/wick-runner/link-card-1200x630.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d1017; --panel:#141923; --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.14);
+    --text:#eceae3; --muted:#8b91a1; --lime:#dcf513; --green:#26a69a; --red:#ef5350; --orange:#ffa62e;
+    --mono:'JetBrains Mono', ui-monospace, monospace; --sans:'Space Grotesk', system-ui, sans-serif;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:500 16px/1.6 var(--sans); }
+  a { color:inherit; }
+  .wrap { max-width:1040px; margin:0 auto; padding:0 16px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 0; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; text-decoration:none; }
+  .mark { width:32px; height:32px; border-radius:9px; background:var(--lime); display:grid; place-items:center; }
+  .lbl { font:500 11px var(--mono); letter-spacing:.18em; text-transform:uppercase; color:var(--muted); }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:12px; font:700 15px var(--sans); text-decoration:none; border:1px solid var(--line-2); background:transparent; color:var(--text); cursor:pointer; }
+  .btn.primary { background:var(--lime); color:#0b1018; border-color:var(--lime); }
+  .btn[aria-disabled="true"] { opacity:.45; pointer-events:none; }
+  h1 { font-size:clamp(40px, 8vw, 76px); line-height:1; letter-spacing:-.04em; margin:12px 0 16px; }
+  h1 span { color:var(--lime); }
+  h2 { font-size:clamp(26px, 4vw, 36px); letter-spacing:-.03em; margin:0 0 8px; }
+  .lead { color:var(--muted); font-size:18px; max-width:620px; }
+  section { padding:56px 0; border-top:1px solid var(--line); }
+  .hero { padding:48px 0 56px; }
+  .cta { display:flex; gap:12px; flex-wrap:wrap; margin-top:24px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; margin-top:24px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:20px; }
+  .card h3 { margin:6px 0 6px; font-size:20px; letter-spacing:-.02em; }
+  .card p { margin:0; color:var(--muted); font-size:15px; }
+  .card .tag { font:700 11px var(--mono); letter-spacing:.12em; text-transform:uppercase; }
+  .live { color:var(--lime); } .soon { color:var(--orange); } .later { color:var(--muted); }
+  .facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-top:24px; }
+  .fact b { display:block; font:700 22px var(--mono); margin-top:4px; overflow-wrap:anywhere; }
+  .addr { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:20px; padding:14px 16px; border:1px solid var(--line); border-radius:14px; }
+  .addr code { font:500 14px var(--mono); overflow-wrap:anywhere; flex:1; min-width:0; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; font-size:15px; }
+  td, th { text-align:left; padding:12px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font:500 11px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  td:first-child { font-weight:700; white-space:nowrap; }
+  .road { display:grid; gap:14px; margin-top:24px; }
+  .phase { display:grid; grid-template-columns:120px 1fr; gap:16px; }
+  .phase ul { margin:0; padding-left:18px; color:var(--muted); }
+  .phase li { margin:4px 0; } .phase li b { color:var(--text); font-weight:700; }
+  .no { list-style:none; padding:0; margin:20px 0 0; display:grid; gap:10px; }
+  .no li::before { content:'✕'; color:var(--red); margin-right:10px; font-weight:700; }
+  footer { padding:32px 0 48px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
+  @media (max-width:600px) { .phase { grid-template-columns:1fr; gap:6px; } td:first-child { white-space:normal; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="brand" href="/"><span class="mark"><svg viewBox="0 0 140 112" width="20" height="20" aria-hidden="true"><path fill="#0b1018" d="M14 20H35L46 63L61 36H78L90 63L104 13H126L103 99H81L69 73L56 99H34Z M20 6H28V20H20Z M110 0H118V13H110Z"/></svg></span>Wick Runner</a>
+    <a class="btn" href="/">Play the game →</a>
+  </header>
+
+  <div class="hero">
+    <span class="lbl">Community token · Robinhood Chain testnet</span>
+    <h1><span>$WRUN</span><br>fuels the runners.</h1>
+    <p class="lead">The game is free and skill decides every leaderboard. $WRUN is how players and communities go further: perks for holders, verified arenas for projects, and a say in what comes next.</p>
+    <div class="cta">
+      <a class="btn primary" id="buy" href="https://testnet.vibevibe.fun/token/0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F" target="_blank" rel="noopener noreferrer">Buy $WRUN on vibe/vibe ↗</a>
+      <a class="btn" href="https://explorer.testnet.chain.robinhood.com/token/0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F" target="_blank" rel="noopener noreferrer">View on explorer ↗</a>
+    </div>
+    <div class="addr"><span class="lbl">Contract</span><code id="addr">0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F</code><button class="btn" id="copy" type="button">Copy</button></div>
+    <div class="facts">
+      <div class="card fact"><span class="lbl">Name</span><b>Wick Runner</b></div>
+      <div class="card fact"><span class="lbl">Ticker</span><b>WRUN</b></div>
+      <div class="card fact"><span class="lbl">Total supply</span><b id="supply">1,000,000,000</b></div>
+      <div class="card fact"><span class="lbl">Network</span><b>Robinhood Chain testnet</b></div>
+    </div>
+  </div>
+
+  <section>
+    <span class="lbl">Utility · live now</span>
+    <h2>What $WRUN does today</h2>
+    <div class="grid">
+      <div class="card"><span class="tag live">● Live</span><h3>Holder XP boost</h3><p>Hold 10k, 100k or 1M $WRUN in your email wallet for +10%, +20% or +30% XP. Level up faster and unlock runners sooner. Read straight from the chain.</p></div>
+      <div class="card"><span class="tag live">● Live</span><h3>Verified arenas</h3><p>Any project can launch its own branded arena. Creators holding 1,000,000 $WRUN get the Verified badge their community can trust.</p></div>
+      <div class="card"><span class="tag live">● Live</span><h3>On-chain records</h3><p>Every verified run can be written to Robinhood Chain. Your best line lives on-chain next to the token that powers the game.</p></div>
+    </div>
+    <table>
+      <thead><tr><th>Holding</th><th>Perk</th></tr></thead>
+      <tbody>
+        <tr><td>10,000 $WRUN</td><td>+10% XP</td></tr>
+        <tr><td>100,000 $WRUN</td><td>+20% XP</td></tr>
+        <tr><td>1,000,000 $WRUN</td><td>+30% XP · can publish verified arenas</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <span class="lbl">Roadmap</span>
+    <h2>Where $WRUN goes next</h2>
+    <p class="lead">Planned, not promised. Each step ships only when it is ready and fair for players without a token.</p>
+    <div class="road">
+      <div class="card phase"><span class="tag soon">Next</span><ul>
+        <li><b>Holder League</b> · a weekly board just for holders, so the most dedicated runners race each other.</li>
+        <li><b>Holder skins</b> · exclusive looks for the crew, cosmetic only: they never change a score.</li>
+      </ul></div>
+      <div class="card phase"><span class="tag soon">Soon</span><ul>
+        <li><b>Seasonal Haunt crew</b> · limited event runners like Bones and Jack unlocked for holders each season.</li>
+        <li><b>Arena sponsorships</b> · projects use $WRUN to feature their arena on the main menu.</li>
+        <li><b>Community votes</b> · holders choose the next chart, event or runner.</li>
+      </ul></div>
+      <div class="card phase"><span class="tag later">Later</span><ul>
+        <li><b>Season prize pools</b> · organised tournaments with published rules, verified runs and a fixed, announced budget.</li>
+        <li><b>Creator tools</b> · deeper arena customisation for verified projects.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section>
+    <span class="lbl">Fair by design</span>
+    <h2>What $WRUN never does</h2>
+    <ul class="no">
+      <li>It never buys points or rank. Every leaderboard is pure skill.</li>
+      <li>It is never needed to play. The full game is free, no sign-in required.</li>
+      <li>It never asks for approvals. The game only reads your balance.</li>
+      <li>It promises no return. Testnet tokens have no value.</li>
+    </ul>
+  </section>
+
+  <footer>$WRUN is a testnet token on Robinhood Chain and has no monetary value. Not financial advice. Only use the official links on this page. We never DM first and never ask for a seed phrase.</footer>
+</div>
+<script>
+  document.getElementById('copy').onclick = async e => { try { await navigator.clipboard.writeText(document.getElementById('addr').textContent); e.target.textContent = 'Copied'; setTimeout(() => e.target.textContent = 'Copy', 1500); } catch {} };
+  // live total supply from the chain (falls back to the launch figure)
+  fetch('https://rpc.testnet.chain.robinhood.com', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: '0x5d075DF76bDfC91f005Ca8b45FaeE38D5a4eCa8F', data: '0x18160ddd' }, 'latest'] }) })
+    .then(r => r.json()).then(j => { if (j.result) document.getElementById('supply').textContent = (BigInt(j.result) / 10n ** 18n).toLocaleString('en-US'); }).catch(() => {});
+</script>
+</body>
+</html>
