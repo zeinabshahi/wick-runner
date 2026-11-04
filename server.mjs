@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, await handle(url.pathname.slice(5), req.method, data, `http://127.0.0.1:${port}`));
     }
     if (!['GET', 'HEAD'].includes(req.method)) throw fail('Method not allowed.', 405);
-    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/token': 'token.html', '/token.html': 'token.html', '/vendor/privy.js': 'vendor/privy.js', '/brand/preview.png': 'assets/brand/wick-runner/link-card-1200x630.png', '/assets/brand/wick-runner/link-card-1200x630.png': 'assets/brand/wick-runner/link-card-1200x630.png' };
+    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/token': 'token.html', '/token.html': 'token.html', '/assets/brand/wick-runner/skyline-art.png': 'assets/brand/wick-runner/skyline-art.png', '/vendor/privy.js': 'vendor/privy.js', '/brand/preview.png': 'assets/brand/wick-runner/link-card-1200x630.png', '/assets/brand/wick-runner/link-card-1200x630.png': 'assets/brand/wick-runner/link-card-1200x630.png' };
     let path = allowed[url.pathname];
     if (url.pathname.startsWith('/vendor/three/')) {
       const relative = decodeURIComponent(url.pathname.slice(14));
