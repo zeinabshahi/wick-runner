@@ -3253,14 +3253,14 @@ const hero = (() => {
   }
   return { start() { if (!running) { running = true; requestAnimationFrame(frameHero); } } };
 })();
-/* GAME OVER — the run's viber stands dazed above the leaderboard: swaying, head lolling, eyes swirling, stars circling its head. */
+/* GAME OVER — the run's viber stands dazed, big, over the game view beside the results: swaying, head lolling, eyes swirling, stars circling its head. */
 const dizzy = (() => {
   if (VERIFY_MODE) return { show() {} };
   const cv = $('dizzyCanvas'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
   r.toneMapping = THREE.ACESFilmicToneMapping;
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdfe6f5, 0x1a1d29, 1.7));
   const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 7, 5); sc.add(key);
-  const cam = new THREE.PerspectiveCamera(30, 1, .1, 30); cam.position.set(2.7, 2.6, 5.4); cam.lookAt(0, 1.25, 0);
+  const cam = new THREE.PerspectiveCamera(30, 1, .1, 30); cam.position.set(3, 2.5, 6.6); cam.lookAt(0, 1.1, 0);
   const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, rr = i % 2 ? .055 : .13; star[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); }
   const starGeo = new THREE.ExtrudeGeometry(star, { depth: .04, bevelEnabled: false }), starMat = new THREE.MeshBasicMaterial({ color: 0xffd93b });
   const stars = Array.from({ length: 5 }, () => sc.add(new THREE.Mesh(starGeo, starMat)).children.at(-1));
@@ -3269,6 +3269,8 @@ const dizzy = (() => {
   function frame(now) {
     if ($('end').classList.contains('hidden') || !$('end').classList.contains('over')) { running = false; return; }
     requestAnimationFrame(frame);
+    const cw = cv.clientWidth, ch = cv.clientHeight;
+    if (cw && (cv.width !== Math.round(cw * r.getPixelRatio()) || cv.height !== Math.round(ch * r.getPixelRatio()))) { r.setSize(cw, ch, false); cam.aspect = cw / ch; cam.updateProjectionMatrix(); }
     const t = settings.calm ? 1 : (now - t0) / 1000, w = Math.sin(t * 2.4), u = Math.cos(t * 2.4);
     const thud = t < .45 ? Math.sin(t / .45 * Math.PI) * .22 : 0;                       // knocked down onto its heels
     R.rig.scale.set(1 + thud * .5, 1 - thud, 1 + thud * .5);
@@ -3287,10 +3289,10 @@ const dizzy = (() => {
     r.render(sc, cam);
   }
   return { show(v) {
-    if (R) disposeObj(R.root); R = buildRunner(v, false); R.root.rotation.y = .5; sc.add(R.root);
+    runnerTint(false); if (R) disposeObj(R.root); R = buildRunner(v, false); R.root.rotation.y = .5; sc.add(R.root); // materials are shared: drop the death flash
     R.root.updateMatrixWorld(true); const hb = new THREE.Box3().setFromObject(R.head), hs = hb.getSize(new V3()); R.head.getWorldPosition(hp);
     lift = hb.max.y - hp.y + .14; ring = Math.max(hs.x, hs.z) * .62;                  // ring the top of whatever head this viber has
-    r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(cv.clientWidth || 150, cv.clientHeight || 150, false);
+    r.setPixelRatio(Math.min(devicePixelRatio, 2));
     t0 = performance.now(); if (!running) { running = true; requestAnimationFrame(frame); }
   } };
 })();
