@@ -3260,7 +3260,7 @@ const dizzy = (() => {
   r.toneMapping = THREE.ACESFilmicToneMapping;
   const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdfe6f5, 0x1a1d29, 1.7));
   const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 7, 5); sc.add(key);
-  const cam = new THREE.PerspectiveCamera(30, 1, .1, 30); cam.position.set(3, 2.5, 6.6); cam.lookAt(0, 1.1, 0);
+  const cam = new THREE.PerspectiveCamera(30, 1, .1, 30); cam.position.set(3.9, 3.1, 8.6); cam.lookAt(0, 1.1, 0);
   const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, rr = i % 2 ? .055 : .13; star[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); }
   const starGeo = new THREE.ExtrudeGeometry(star, { depth: .04, bevelEnabled: false }), starMat = new THREE.MeshBasicMaterial({ color: 0xffd93b });
   const stars = Array.from({ length: 5 }, () => sc.add(new THREE.Mesh(starGeo, starMat)).children.at(-1));
