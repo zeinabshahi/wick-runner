@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, await handle(url.pathname.slice(5), req.method, data, `http://127.0.0.1:${port}`));
     }
     if (!['GET', 'HEAD'].includes(req.method)) throw fail('Method not allowed.', 405);
-    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/token': 'token.html', '/token.html': 'token.html', '/assets/brand/wick-runner/skyline-art.png': 'assets/brand/wick-runner/skyline-art.png', '/vendor/privy.js': 'vendor/privy.js', '/brand/preview.png': 'assets/brand/wick-runner/link-card-1200x630.png', '/assets/brand/wick-runner/link-card-1200x630.png': 'assets/brand/wick-runner/link-card-1200x630.png' };
+    const allowed = { '/': 'index.html', '/index.html': 'index.html', '/game.mjs': 'game.mjs', '/game-core.mjs': 'game-core.mjs', '/haunt.mjs': 'haunt.mjs', '/token': 'token.html', '/token.html': 'token.html', '/assets/brand/wick-runner/skyline-art.png': 'assets/brand/wick-runner/skyline-art.png', '/vendor/privy.js': 'vendor/privy.js', '/brand/preview.png': 'assets/brand/wick-runner/og-2400x1260.png', '/assets/brand/wick-runner/og-2400x1260.png': 'assets/brand/wick-runner/og-2400x1260.png' };
     let path = allowed[url.pathname];
     if (url.pathname.startsWith('/vendor/three/')) {
       const relative = decodeURIComponent(url.pathname.slice(14));
@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) => {
     const absolute = resolve(root, path); if (!absolute.startsWith(root + sep)) throw fail('Not found.', 404);
     let content; try { content = await readFile(absolute); } catch { throw fail('Not found.', 404); }
     if (path === 'index.html' || path === 'game.mjs') content = Buffer.from(content.toString().replaceAll('https://cdn.jsdelivr.net/npm/three@0.170.0/', '/vendor/three/').replaceAll('https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.min.js', '/vendor/ethers.js'));
-    if (path === 'index.html') content = Buffer.from(content.toString().replaceAll('content="/assets/brand/wick-runner/link-card-1200x630.png"', `content="${origin.origin}/assets/brand/wick-runner/link-card-1200x630.png"`));
+    if (path === 'index.html') content = Buffer.from(content.toString().replaceAll('content="/assets/brand/wick-runner/og-2400x1260.png"', `content="${origin.origin}/assets/brand/wick-runner/og-2400x1260.png"`));
     res.writeHead(200, { 'Content-Type': path.endsWith('.png') ? 'image/png' : path.endsWith('.mp3') ? 'audio/mpeg' : path.endsWith('.json') ? 'application/json' : path.endsWith('.html') ? 'text/html; charset=utf-8' : 'text/javascript; charset=utf-8', 'Cache-Control': path.startsWith('node_modules') || path.endsWith('.mp3') ? 'public, max-age=86400' : 'no-cache' });
     res.end(req.method === 'HEAD' ? undefined : content);
   } catch (e) { if (!res.headersSent) json(res, e.status || 400, { error: e.status ? e.message : 'Request could not be completed.' }); else res.end(); if (!e.status) console.error(e); }
