@@ -2050,7 +2050,7 @@ function endRun(cleared) {
   $('share').textContent = `I ${cleared ? 'cleared' : 'reached ' + candlesRun + ' candles on'} ${level.sym} ${tf.id}${stars ? ' ' + '★'.repeat(stars) : ''} in ${t}.\n${total.toLocaleString()} pts in Wick Runner. Can you beat my line?\n#WickRunner #Parkour` + (level.arena ? ' ' + arenaLink(level.arena) : '');
   $('next').textContent = nextLv ? `Play ${nextLv.sym} →` : 'Next chart';
   $('next').classList.toggle('hidden', !cleared || !nextLv || !levelUnlocked(nextLv));
-  $('end').classList.remove('hidden'); $('end').classList.toggle('over', !cleared); document.body.classList.add('results'); document.body.classList.remove('dying');
+  $('end').classList.remove('hidden'); $('end').classList.toggle('over', !cleared); if (!cleared) dizzy.show(VIBERS[viberIdx]); document.body.classList.add('results'); document.body.classList.remove('dying');
   if (document.pointerLockElement) document.exitPointerLock();
 }
 function countUp(el, n) { // score ticks up with an ease-out; a timer guarantees the final value even if frames stop
@@ -3253,6 +3253,47 @@ const hero = (() => {
   }
   return { start() { if (!running) { running = true; requestAnimationFrame(frameHero); } } };
 })();
+/* GAME OVER — the run's viber stands dazed above the leaderboard: swaying, head lolling, eyes swirling, stars circling its head. */
+const dizzy = (() => {
+  if (VERIFY_MODE) return { show() {} };
+  const cv = $('dizzyCanvas'), r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+  r.toneMapping = THREE.ACESFilmicToneMapping;
+  const sc = new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xdfe6f5, 0x1a1d29, 1.7));
+  const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 7, 5); sc.add(key);
+  const cam = new THREE.PerspectiveCamera(30, 1, .1, 30); cam.position.set(2.7, 2.6, 5.4); cam.lookAt(0, 1.25, 0);
+  const star = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, rr = i % 2 ? .055 : .13; star[i ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); }
+  const starGeo = new THREE.ExtrudeGeometry(star, { depth: .04, bevelEnabled: false }), starMat = new THREE.MeshBasicMaterial({ color: 0xffd93b });
+  const stars = Array.from({ length: 5 }, () => sc.add(new THREE.Mesh(starGeo, starMat)).children.at(-1));
+  const hp = new V3();
+  let R = null, running = false, t0 = 0, lift = .78, ring = .55;
+  function frame(now) {
+    if ($('end').classList.contains('hidden') || !$('end').classList.contains('over')) { running = false; return; }
+    requestAnimationFrame(frame);
+    const t = settings.calm ? 1 : (now - t0) / 1000, w = Math.sin(t * 2.4), u = Math.cos(t * 2.4);
+    const thud = t < .45 ? Math.sin(t / .45 * Math.PI) * .22 : 0;                       // knocked down onto its heels
+    R.rig.scale.set(1 + thud * .5, 1 - thud, 1 + thud * .5);
+    R.rig.rotation.z = w * .13; R.rig.rotation.x = .12 + u * .05;                          // woozy circular sway
+    R.hips.position.y = R.hipBase - .05;
+    R.legL.rotation.x = -.15 + u * .1; R.legR.rotation.x = -.05 - u * .1;
+    R.armL.rotation.x = .1 + w * .2; R.armR.rotation.x = .1 - w * .2;                        // limp, dangling arms
+    R.armL.rotation.z = .25 - w * .12; R.armR.rotation.z = -.25 - w * .12;
+    R.head.rotation.z = Math.sin(t * 2.4 + 1) * .28; R.head.rotation.x = .18 + u * .08; R.head.rotation.y = w * .2;
+    for (const ey of R.eyes) ey.scale.y = .45;                                               // heavy, half-shut eyes
+    for (const [i, p] of R.pupils.entries()) { const a = t * 7 * (i ? -1 : 1); p.position.x = p.userData.base.x + Math.cos(a) * .03; p.position.y = p.userData.base.y + Math.sin(a) * .03; }
+    R.root.updateMatrixWorld(true); R.head.getWorldPosition(hp);
+    stars.forEach((s, i) => { const a = t * 3 + i / stars.length * Math.PI * 2;
+      s.position.set(hp.x + Math.cos(a) * ring, hp.y + lift + Math.sin(a * 2) * .05, hp.z + Math.sin(a) * ring);
+      s.rotation.set(0, -a, t * 4); s.scale.setScalar(.8 + .25 * Math.sin(t * 6 + i)); });
+    r.render(sc, cam);
+  }
+  return { show(v) {
+    if (R) disposeObj(R.root); R = buildRunner(v, false); R.root.rotation.y = .5; sc.add(R.root);
+    R.root.updateMatrixWorld(true); const hb = new THREE.Box3().setFromObject(R.head), hs = hb.getSize(new V3()); R.head.getWorldPosition(hp);
+    lift = hb.max.y - hp.y + .14; ring = Math.max(hs.x, hs.z) * .62;                  // ring the top of whatever head this viber has
+    r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(cv.clientWidth || 150, cv.clientHeight || 150, false);
+    t0 = performance.now(); if (!running) { running = true; requestAnimationFrame(frame); }
+  } };
+})();
 function showLanding() { $('landing').classList.remove('hidden'); $('landing').scrollTop = 0; hero.start(); }
 function enterGame() { $('landing').classList.add('hidden'); if (profile.xp >= VIBER_XP[heroState.i] && heroState.i !== viberIdx) setViber(heroState.i); }
 document.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); Sfx.init(); enterGame(); }));
@@ -3272,7 +3313,7 @@ for (const d of debris) d.m.visible = false;
 if (!VERIFY_MODE) requestAnimationFrame(frame);
 $('loading').remove();
 
-window.__cp = { buildRunner, VIBERS, setViber, THREE, get runner() { return runner; }, setLevel(i) { level = LEVELS[i].sprint ? makeSprintLevel(sprintPick) : LEVELS[i]; }, get chartIdx() { return chartIdx; }, get dbg() { return { wish: _wish.toArray(), wishLen, camMode }; }, get scene() { return scene; }, get cam() { return camera.position; }, get settings() { return settings; }, rayBox, player, platforms, candles, previewCandles, get level() { return level; }, colliders, rails, poles, orbs, game, score, restart, input, press, release, step, moveAndCollide, readMoveInput, streamCourse,
+window.__cp = { buildRunner, dizzy, VIBERS, setViber, THREE, get runner() { return runner; }, setLevel(i) { level = LEVELS[i].sprint ? makeSprintLevel(sprintPick) : LEVELS[i]; }, get chartIdx() { return chartIdx; }, get dbg() { return { wish: _wish.toArray(), wishLen, camMode }; }, get scene() { return scene; }, get cam() { return camera.position; }, get settings() { return settings; }, rayBox, player, platforms, candles, previewCandles, get level() { return level; }, colliders, rails, poles, orbs, game, score, restart, input, press, release, step, moveAndCollide, readMoveInput, streamCourse,
   simStep, courseConfig, setSprintRoute(i) { const chosen = makeSprintLevel(i); sprintPick = i; if (level.sprint) level = chosen; }, nextLevel: () => nextLevel(level)?.sym, boardId: () => boardId(level), refreshCalendar, parseArena, arenaCode, arenaLevel, setYaw(v) { yaw = v; }, setTimeframe(i) { tfPick = clamp(i | 0, 0, 3); }, get calendar() { return { day: today, season: season.id, daily: LEVELS.find(l => l.endless).seed, cup: LEVELS.find(l => l.cup).period }; }, get counts() { return { platforms: platforms.size, candles: candles.size, colliders: colliders.length, textures: renderer.info.memory.textures }; },
   advance(sec) { for (let s = 0; s < sec; s += 1 / 60) tick(1 / 60, performance.now()); }, // test hook: run frames without rAF
   get finishZ() { return finishZ; }, get lastRun() { return game.lastRun; }, get runLog() { return runLog; }, result: runResult, retryCheckpoint, resolveDeath, replayRun, tick, get camera() { return camera; }, render: () => composer.render(), Sfx, setArena(c) { level = arenaLevel(sanitizeArena(c)); }, // camera/render/Sfx: frame-by-frame video capture (video/capture.mjs)

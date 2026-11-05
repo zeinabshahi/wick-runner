@@ -208,6 +208,7 @@
   #end #finalScore { font-size:clamp(40px, 9vh, 70px); }
   #end #finalBest { font-size:12px; line-height:1.5; } #end .stars { font-size:1.5em; }
   #end .stats div { padding:7px 8px; } #end .stats b { font-size:15px; }
+  #dizzyCanvas { display:none; width:150px; height:150px; margin:-6px auto -10px; } #end.over #dizzyCanvas { display:block; }
   #end #cardImg, #end #share { display:none; }  /* still built for Post on X / Save image, just not shown */
   #end #board li { padding:5px 10px; } #end #board li:nth-child(n+4):not(.me) { display:none; }
   #end .btns { justify-content:flex-start; gap:8px; } #end .btns .big { padding:10px 14px; font-size:13px; }
@@ -960,6 +961,7 @@
     <div id="runComparison" hidden><div class="lbl">VS YOUR LOCAL BEST-SCORE RUN</div><div id="comparisonValues"></div></div>
     <p class="runner-note" id="runInsight" hidden></p>
     <div id="skillReview"><div class="lbl">MOVEMENT REVIEW · THIS RUN, INCLUDING RETRIES</div><div id="skillValues"></div><p class="runner-note" id="skillTip"></p></div>
+    <canvas id="dizzyCanvas" width="320" height="320" aria-hidden="true"></canvas>
     <div>
       <div class="lbl" id="boardTitle" style="text-align:left; margin-bottom:8px">Leaderboard</div>
       <ol id="board"></ol>
